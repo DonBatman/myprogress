@@ -12,7 +12,7 @@ local function get_top_players(skill, limit)
 	return list
 end
 
-minetest.register_chatcommand("leaderboard", {
+core.register_chatcommand("leaderboard", {
 	params = "[skill]",
 	description = "Show the top players (Usage: /leaderboard miner)",
 	func = function(name, param)

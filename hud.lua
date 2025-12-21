@@ -56,16 +56,16 @@ function quests.update_hud(player)
 end
 
 local timer = 0
-minetest.register_globalstep(function(dtime)
+core.register_globalstep(function(dtime)
 	timer = timer + dtime
 	if timer > 0.5 then
-		for _, player in ipairs(minetest.get_connected_players()) do
+		for _, player in ipairs(core.get_connected_players()) do
 			quests.update_hud(player)
 		end
 		timer = 0
 	end
 end)
 
-minetest.register_on_leaveplayer(function(player)
+core.register_on_leaveplayer(function(player)
 	hud_data[player:get_player_name()] = nil
 end)

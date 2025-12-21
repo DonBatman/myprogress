@@ -3,7 +3,7 @@ myprogress.players = {}
 myprogress_nodes = {}
 local player_huds = {}
 
-local path = minetest.get_modpath("myprogress")
+local path = core.get_modpath("myprogress")
 dofile(path .. "/data.lua")
 
 local xp_scaling = {mining = 15, lumbering = 20, digging = 10, farming = 5, building = 50}
@@ -50,7 +50,7 @@ function myprogress.add_xp(player, skill, amount)
 	local new_l = math.floor((s[skill] / xp_scaling[skill]) ^ (1/1.5))
 	if new_l > s[l_key] then
 		s[l_key] = new_l
-		minetest.chat_send_player(name, "★ LEVEL UP: "..skill:upper().." IS NOW "..new_l.." ★")
+		core.chat_send_player(name, "★ LEVEL UP: "..skill:upper().." IS NOW "..new_l.." ★")
 	local rewards = {
     mining = "myprogress:master_smelter",
     lumbering = "myprogress:master_sawmill",
@@ -62,18 +62,18 @@ function myprogress.add_xp(player, skill, amount)
 	if new_l == 20 and rewards[skill] then
     	local inv = player:get_inventory()
     	inv:add_item("main", rewards[skill])
-    	minetest.chat_send_player(name, "🎁 MASTERY REACHED! You have been awarded: " .. rewards[skill])
+    	core.chat_send_player(name, "🎁 MASTERY REACHED! You have been awarded: " .. rewards[skill])
 	end
 	end
 	myprogress.update_hud(player)
 end
 
-minetest.register_on_joinplayer(function(player)
+core.register_on_joinplayer(function(player)
 	local name = player:get_player_name()
 	if not myprogress.players[name] then
 		myprogress.players[name] = {mining=0,mlevel=0,lumbering=0,llevel=0,digging=0,dlevel=0,farming=0,flevel=0,building=0,blevel=0}
 	end
-	minetest.after(0.5, function() myprogress.update_hud(player) end)
+	core.after(0.5, function() myprogress.update_hud(player) end)
 end)
 
 myprogress_nodes.mining = {"default:stone", "default:stone_with_coal", "default:stone_with_iron", "default:stone_with_copper", "default:stone_with_gold", "default:stone_with_mese", "default:stone_with_diamond", "default:obsidian"}
@@ -81,7 +81,7 @@ myprogress_nodes.lumber = {"default:tree", "default:pine_tree", "default:acacia_
 myprogress_nodes.digging = {"default:dirt", "default:dirt_with_grass", "default:sand", "default:desert_sand", "default:gravel", "default:clay"}
 myprogress_nodes.farming = {"farming:wheat_8", "farming:cotton_8", "farming:corn_8", "farming:coffee_5"}
 
-minetest.register_on_dignode(function(pos, oldnode, digger)
+core.register_on_dignode(function(pos, oldnode, digger)
 	if not digger or not digger:is_player() then return end
 	local node_name = oldnode.name
 	
@@ -108,11 +108,11 @@ dofile(path .. "/nodes.lua")
 myprogress.load_data()
 
 local timer = 0
-minetest.register_globalstep(function(dtime)
+core.register_globalstep(function(dtime)
 	timer = timer + dtime
 	if timer > 10 then myprogress.save_data() timer = 0 end
 end)
-minetest.register_chatcommand("skills", {
+core.register_chatcommand("skills", {
     description = "Check your skill levels and progress",
     func = function(name)
         local stats = myprogress.players[name]
@@ -139,7 +139,7 @@ minetest.register_chatcommand("skills", {
             
             "button_exit[3,6;2,1;close;Close Menu]"
 
-        minetest.show_formspec(name, "myprogress:skills_menu", formspec)
+        core.show_formspec(name, "myprogress:skills_menu", formspec)
         return true
     end,
 })
@@ -166,7 +166,7 @@ for _, a in pairs(awards) do
 		local c = level_data[2]
 		local bl = string.lower(b)
 
-		minetest.register_node("myprogress:award_"..al.."_"..bl, {
+		core.register_node("myprogress:award_"..al.."_"..bl, {
 			description = b.." "..a.." Trophy",
 			drawtype = "mesh",
 			mesh = "myprogress_award_"..al..".obj", 
@@ -178,7 +178,7 @@ for _, a in pairs(awards) do
 	end
 end
 
-minetest.register_on_joinplayer(function(player)
+core.register_on_joinplayer(function(player)
     local name = player:get_player_name()
     
     if not quests.players[name] then
@@ -197,7 +197,7 @@ function award_for_digging(nname, playername)
 	if not ptable or not ptable.awards then return end
 	
 	local atable = ptable.awards
-	local player = minetest.get_player_by_name(playername)
+	local player = core.get_player_by_name(playername)
 	if not player then return end
 	local inv = player:get_inventory()
 
@@ -208,20 +208,20 @@ function award_for_digging(nname, playername)
 		for i, mult in ipairs(levels) do
 			if val == set_val * mult then
 				local tier = tier_names[i]
-				minetest.chat_send_player(playername, "🏆 Level "..i.." "..skill_name:upper().."!")
+				core.chat_send_player(playername, "🏆 Level "..i.." "..skill_name:upper().."!")
 				
 				inv:add_item("main", "myprogress:award_"..skill_name.."_"..tier)
 
 local pos = player:get_pos()
 pos.y = pos.y + 1.5
 
-minetest.sound_play("default_cool_item", {
+core.sound_play("default_cool_item", {
     pos = pos,
     gain = 1.0,
     max_hear_distance = 10,
 })
 
-minetest.add_particlespawner({
+core.add_particlespawner({
     amount = 40,
     time = 0.1,
     minpos = {x=pos.x-0.2, y=pos.y, z=pos.z-0.2},
@@ -238,7 +238,7 @@ minetest.add_particlespawner({
 })
 				if i == 5 and machine_name then
 					inv:add_item("main", machine_name)
-					minetest.chat_send_player(playername, "🔥 MASTERY: You've earned a machine!")
+					core.chat_send_player(playername, "🔥 MASTERY: You've earned a machine!")
 				end
 				return i
 			end
@@ -271,7 +271,7 @@ end
 function award_for_placing(nname, playername)
 	if not quests.players[playername] then return end
 	local atable = quests.players[playername].awards
-	local player = minetest.get_player_by_name(playername)
+	local player = core.get_player_by_name(playername)
 	local inv = player:get_inventory()
 
 	atable.builder = atable.builder + 1
@@ -283,18 +283,18 @@ function award_for_placing(nname, playername)
 	for i, mult in ipairs(levels) do
 		if atable.builder == set * mult then
 			atable.builder_level = i
-			minetest.chat_send_player(playername, "🏗️ Builder Level "..i.."!")
+			core.chat_send_player(playername, "🏗️ Builder Level "..i.."!")
 
 local pos = player:get_pos()
 pos.y = pos.y + 1.5
 
-minetest.sound_play("default_cool_item", {
+core.sound_play("default_cool_item", {
     pos = pos,
     gain = 1.0,
     max_hear_distance = 10,
 })
 
-minetest.add_particlespawner({
+core.add_particlespawner({
     amount = 40,
     time = 0.1,
     minpos = {x=pos.x-0.2, y=pos.y, z=pos.z-0.2},
@@ -315,27 +315,27 @@ minetest.add_particlespawner({
 	end
 end
 
-minetest.register_on_dignode(function(pos, oldnode, digger)
+core.register_on_dignode(function(pos, oldnode, digger)
 	if digger and digger:is_player() then
 		award_for_digging(oldnode.name, digger:get_player_name())
 	end
 end)
 
-minetest.register_on_placenode(function(pos, newnode, placer)
+core.register_on_placenode(function(pos, newnode, placer)
 	if placer and placer:is_player() then
 		award_for_placing(newnode.name, placer:get_player_name())
 	end
 end)
-local world_path = minetest.get_worldpath()
+local world_path = core.get_worldpath()
 local file_path = world_path .. "/quests_data.txt"
 
 function quests.save_data()
     local file = io.open(file_path, "w")
     if file then
-        file:write(minetest.serialize(quests.players))
+        file:write(core.serialize(quests.players))
         file:close()
     else
-        minetest.log("error", "[Quests] Failed to save player data!")
+        core.log("error", "[Quests] Failed to save player data!")
     end
 end
 
@@ -344,32 +344,32 @@ function quests.load_data()
     if file then
         local content = file:read("*all")
         file:close()
-        local data = minetest.deserialize(content)
+        local data = core.deserialize(content)
         if type(data) == "table" then
             quests.players = data
-            minetest.log("action", "[Quests] Data loaded successfully.")
+            core.log("action", "[Quests] Data loaded successfully.")
         end
     end
 end
-minetest.register_on_leaveplayer(function(player)
+core.register_on_leaveplayer(function(player)
     quests.save_data()
 end)
 
 local timer = 0
-minetest.register_globalstep(function(dtime)
+core.register_globalstep(function(dtime)
     timer = timer + dtime
     if timer >= 300 then
         quests.save_data()
         timer = 0
-        minetest.log("action", "[Quests] Global autosave complete.")
+        core.log("action", "[Quests] Global autosave complete.")
     end
 end)
 
-minetest.register_on_shutdown(function()
+core.register_on_shutdown(function()
     quests.save_data()
 end)
 quests.load_data()
-minetest.register_chatcommand("setlevel", {
+core.register_chatcommand("setlevel", {
 	params = "<skill> <amount>",
 	description = "Set your own skill count safely",
 	privs = {server = true},
