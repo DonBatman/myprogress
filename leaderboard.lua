@@ -1,17 +1,12 @@
--- leaderboard.lua
-
--- Helper to find the top players for a specific skill
 local function get_top_players(skill, limit)
 	local list = {}
 	
-	-- Pull data from the quests table
 	for name, data in pairs(quests.players) do
 		if data.awards and data.awards[skill] then
 			table.insert(list, {name = name, score = data.awards[skill]})
 		end
 	end
 	
-	-- Sort by score (Highest first)
 	table.sort(list, function(a, b) return a.score > b.score end)
 	
 	return list
@@ -36,7 +31,7 @@ minetest.register_chatcommand("leaderboard", {
 		
 		local output = "\n--- 🏆 " .. skill:upper() .. " LEADERBOARD ---"
 		for i, entry in ipairs(top_list) do
-			if i > 5 then break end -- Only show top 5
+			if i > 5 then break end
 			output = output .. "\n" .. i .. ". " .. entry.name .. ": " .. entry.score
 		end
 		output = output .. "\n------------------------------"

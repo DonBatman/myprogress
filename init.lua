@@ -3,14 +3,11 @@ myprogress.players = {}
 myprogress_nodes = {}
 local player_huds = {}
 
--- Load Sub-files
 local path = minetest.get_modpath("myprogress")
 dofile(path .. "/data.lua")
 
--- Config
 local xp_scaling = {mining = 15, lumbering = 20, digging = 10, farming = 5, building = 50}
 
--- HUD Helper
 function myprogress.get_bar(skill, xp, level)
 	local base = xp_scaling[skill]
 	local cur_xp = math.floor(base * (level ^ 1.5))
@@ -45,7 +42,6 @@ function myprogress.update_hud(player)
 	end
 end
 
--- XP System
 function myprogress.add_xp(player, skill, amount)
 	local name = player:get_player_name()
 	local s = myprogress.players[name]
@@ -55,7 +51,6 @@ function myprogress.add_xp(player, skill, amount)
 	if new_l > s[l_key] then
 		s[l_key] = new_l
 		minetest.chat_send_player(name, "★ LEVEL UP: "..skill:upper().." IS NOW "..new_l.." ★")
-		-- Inside your add_xp function, right after the Level Up chat message:
 	local rewards = {
     mining = "myprogress:master_smelter",
     lumbering = "myprogress:master_sawmill",
@@ -73,7 +68,6 @@ function myprogress.add_xp(player, skill, amount)
 	myprogress.update_hud(player)
 end
 
--- Events
 minetest.register_on_joinplayer(function(player)
 	local name = player:get_player_name()
 	if not myprogress.players[name] then
@@ -82,7 +76,6 @@ minetest.register_on_joinplayer(function(player)
 	minetest.after(0.5, function() myprogress.update_hud(player) end)
 end)
 
--- Expanded Node Lists
 myprogress_nodes.mining = {"default:stone", "default:stone_with_coal", "default:stone_with_iron", "default:stone_with_copper", "default:stone_with_gold", "default:stone_with_mese", "default:stone_with_diamond", "default:obsidian"}
 myprogress_nodes.lumber = {"default:tree", "default:pine_tree", "default:acacia_tree", "default:jungletree"}
 myprogress_nodes.digging = {"default:dirt", "default:dirt_with_grass", "default:sand", "default:desert_sand", "default:gravel", "default:clay"}
@@ -92,12 +85,10 @@ minetest.register_on_dignode(function(pos, oldnode, digger)
 	if not digger or not digger:is_player() then return end
 	local node_name = oldnode.name
 	
-	-- Helper to check lists
 	local function check(list, skill)
 		for _, n in pairs(list) do
 			if node_name == n then
 				myprogress.add_xp(digger, skill, 1)
-				-- Apply rewards (Double drops, etc) from nodes.lua logic
 				if myprogress.apply_rewards then
 					myprogress.apply_rewards(pos, oldnode, digger, skill)
 				end
@@ -113,11 +104,9 @@ minetest.register_on_dignode(function(pos, oldnode, digger)
 	if check(myprogress_nodes.farming, "farming") then return end
 end)
 
--- Load nodes and data at end
 dofile(path .. "/nodes.lua")
 myprogress.load_data()
 
--- Autosave
 local timer = 0
 minetest.register_globalstep(function(dtime)
 	timer = timer + dtime
@@ -129,31 +118,25 @@ minetest.register_chatcommand("skills", {
         local stats = myprogress.players[name]
         if not stats then return false, "No data found." end
 
-        -- Create the Menu
         local formspec = "size[8,7]background[-0.5,-0.5;9,8;myprogress_bg.png]" ..
             "label[3.2,0.5;--- SKILL MASTERY ---]" ..
             
-            -- Mining Row
             "image[1,1.2;1,1;default_tool_pittock.png]" ..
             "label[2,1.2;Mining Lvl " .. stats.mlevel .. "]" ..
             "label[2,1.6;XP: " .. stats.mining .. "]" ..
             
-            -- Lumbering Row
             "image[1,2.2;1,1;default_tool_steelaxe.png]" ..
             "label[2,2.2;Lumber Lvl " .. stats.llevel .. "]" ..
             "label[2,2.6;XP: " .. stats.lumbering .. "]" ..
             
-            -- Digging Row
             "image[1,3.2;1,1;default_tool_steelshovel.png]" ..
             "label[2,3.2;Digging Lvl " .. stats.dlevel .. "]" ..
             "label[2,3.6;XP: " .. stats.digging .. "]" ..
             
-            -- Building Row
             "image[1,4.2;1,1;default_brick.png]" ..
             "label[2,4.2;Building Lvl " .. stats.blevel .. "]" ..
             "label[2,4.6;XP: " .. stats.building .. "]" ..
             
-            -- Close Button
             "button_exit[3,6;2,1;close;Close Menu]"
 
         minetest.show_formspec(name, "myprogress:skills_menu", formspec)
@@ -176,7 +159,6 @@ local award_levels = {
 	{"Gold", "yellow:120"},
 }
 
--- 1. Register Trophies (Prefix changed to myprogress:)
 for _, a in pairs(awards) do
 	local al = string.lower(a)
 	for _, level_data in ipairs(award_levels) do
@@ -184,7 +166,6 @@ for _, a in pairs(awards) do
 		local c = level_data[2]
 		local bl = string.lower(b)
 
-		-- Fixed: Mod name prefix must match folder name "myprogress"
 		minetest.register_node("myprogress:award_"..al.."_"..bl, {
 			description = b.." "..a.." Trophy",
 			drawtype = "mesh",
@@ -197,11 +178,9 @@ for _, a in pairs(awards) do
 	end
 end
 
--- 2. Player Join & Data Init
 minetest.register_on_joinplayer(function(player)
     local name = player:get_player_name()
     
-    -- ONLY create a new table if one wasn't loaded from the file
     if not quests.players[name] then
         quests.players[name] = {
             awards = {
@@ -213,7 +192,6 @@ minetest.register_on_joinplayer(function(player)
     end
 end)
 
--- 3. The Awarding Logic
 function award_for_digging(nname, playername)
 	local ptable = quests.players[playername]
 	if not ptable or not ptable.awards then return end
@@ -232,20 +210,17 @@ function award_for_digging(nname, playername)
 				local tier = tier_names[i]
 				minetest.chat_send_player(playername, "🏆 Level "..i.." "..skill_name:upper().."!")
 				
-				-- Fixed reference to myprogress:
 				inv:add_item("main", "myprogress:award_"..skill_name.."_"..tier)
--- Add this where the player gets the trophy
-local pos = player:get_pos()
-pos.y = pos.y + 1.5 -- Eye level
 
--- 1. Play a "Level Up" Sound
+local pos = player:get_pos()
+pos.y = pos.y + 1.5
+
 minetest.sound_play("default_cool_item", {
     pos = pos,
     gain = 1.0,
     max_hear_distance = 10,
 })
 
--- 2. Create a "Burst" of particles
 minetest.add_particlespawner({
     amount = 40,
     time = 0.1,
@@ -253,13 +228,13 @@ minetest.add_particlespawner({
     maxpos = {x=pos.x+0.2, y=pos.y+0.5, z=pos.z+0.2},
     minvel = {x=-3, y=1, z=-3},
     maxvel = {x=3, y=5, z=3},
-    minacc = {x=0, y=-9.8, z=0}, -- Gravity pulls them down
+    minacc = {x=0, y=-9.8, z=0},
     maxacc = {x=0, y=-9.8, z=0},
     minexptime = 1,
     maxexptime = 2,
     minsize = 1,
     maxsize = 3,
-    texture = "default_item_smoke.png^[colorize:yellow:200", -- Golden sparkles
+    texture = "default_item_smoke.png^[colorize:yellow:200",
 })
 				if i == 5 and machine_name then
 					inv:add_item("main", machine_name)
@@ -271,7 +246,6 @@ minetest.add_particlespawner({
 		return nil
 	end
 
-	-- Node Checks
 	if string.find(nname, "stone") then
 		atable.miner = atable.miner + 1
 		local lvl = check_level(atable.miner, quests.settings.miner, "miner", "myprogress:master_smelter")
@@ -294,7 +268,6 @@ minetest.add_particlespawner({
 	end
 end
 
--- 4. Building Logic
 function award_for_placing(nname, playername)
 	if not quests.players[playername] then return end
 	local atable = quests.players[playername].awards
@@ -311,18 +284,16 @@ function award_for_placing(nname, playername)
 		if atable.builder == set * mult then
 			atable.builder_level = i
 			minetest.chat_send_player(playername, "🏗️ Builder Level "..i.."!")
--- Add this where the player gets the trophy
-local pos = player:get_pos()
-pos.y = pos.y + 1.5 -- Eye level
 
--- 1. Play a "Level Up" Sound
+local pos = player:get_pos()
+pos.y = pos.y + 1.5
+
 minetest.sound_play("default_cool_item", {
     pos = pos,
     gain = 1.0,
     max_hear_distance = 10,
 })
 
--- 2. Create a "Burst" of particles
 minetest.add_particlespawner({
     amount = 40,
     time = 0.1,
@@ -330,13 +301,13 @@ minetest.add_particlespawner({
     maxpos = {x=pos.x+0.2, y=pos.y+0.5, z=pos.z+0.2},
     minvel = {x=-3, y=1, z=-3},
     maxvel = {x=3, y=5, z=3},
-    minacc = {x=0, y=-9.8, z=0}, -- Gravity pulls them down
+    minacc = {x=0, y=-9.8, z=0},
     maxacc = {x=0, y=-9.8, z=0},
     minexptime = 1,
     maxexptime = 2,
     minsize = 1,
     maxsize = 3,
-    texture = "default_item_smoke.png^[colorize:yellow:200", -- Golden sparkles
+    texture = "default_item_smoke.png^[colorize:yellow:200",
 })
 			inv:add_item("main", "myprogress:award_builder_"..tiers[i])
 			if i == 5 then inv:add_item("main", "myprogress:master_architect_table") end
@@ -344,7 +315,6 @@ minetest.add_particlespawner({
 	end
 end
 
--- 5. Global Callbacks
 minetest.register_on_dignode(function(pos, oldnode, digger)
 	if digger and digger:is_player() then
 		award_for_digging(oldnode.name, digger:get_player_name())
@@ -359,7 +329,6 @@ end)
 local world_path = minetest.get_worldpath()
 local file_path = world_path .. "/quests_data.txt"
 
--- SAVE FUNCTION
 function quests.save_data()
     local file = io.open(file_path, "w")
     if file then
@@ -370,7 +339,6 @@ function quests.save_data()
     end
 end
 
--- LOAD FUNCTION
 function quests.load_data()
     local file = io.open(file_path, "r")
     if file then
@@ -383,27 +351,23 @@ function quests.load_data()
         end
     end
 end
--- Save when a player leaves
 minetest.register_on_leaveplayer(function(player)
     quests.save_data()
 end)
 
--- Save automatically every 5 minutes (Autosave)
 local timer = 0
 minetest.register_globalstep(function(dtime)
     timer = timer + dtime
-    if timer >= 300 then -- 300 seconds = 5 minutes
+    if timer >= 300 then
         quests.save_data()
         timer = 0
         minetest.log("action", "[Quests] Global autosave complete.")
     end
 end)
 
--- Save on server shutdown
 minetest.register_on_shutdown(function()
     quests.save_data()
 end)
--- Run the load function immediately on startup
 quests.load_data()
 minetest.register_chatcommand("setlevel", {
 	params = "<skill> <amount>",
@@ -412,14 +376,12 @@ minetest.register_chatcommand("setlevel", {
 	func = function(name, param)
 		local skill, amount = param:match("^(%S+)%s+(%d+)$")
 		
-		-- 1. Check if input is valid
 		if not skill or not amount then 
 			return false, "Usage: /setlevel <miner|digger|logger|builder|farmer> <number>" 
 		end
 		
 		local amount_num = tonumber(amount)
 
-		-- 2. CRASH PROTECTION: Ensure the table exists for this player
 		if not quests.players[name] then
 			quests.players[name] = {}
 		end
@@ -434,15 +396,12 @@ minetest.register_chatcommand("setlevel", {
 		local ptable = quests.players[name]
 		local atable = ptable.awards
 
-		-- 3. Check if the skill name is actually one of the keys in your table
 		if atable[skill] == nil then
 			return false, "Error: Skill '"..skill.."' not found. Valid: miner, digger, logger, builder, farmer."
 		end
 
-		-- 4. Set the value
 		atable[skill] = amount_num
 		
-		-- 5. Trigger the awarding logic so you get your trophies immediately
 		local fake_nodes = {
 			miner = "default:stone",
 			digger = "default:dirt",

@@ -1,4 +1,3 @@
--- hud.lua
 local hud_data = {}
 
 local function get_active_skill(player)
@@ -43,7 +42,6 @@ function quests.update_hud(player)
 	if not hud_data[name] then
 		hud_data[name] = player:hud_add({
 			hud_elem_type = "text",
-			-- POSITION: x=0.5 (center), y=0.05 (very top)
 			position = {x = 0.5, y = 0.05},
 			offset = {x = 0, y = 20},
 			text = bar_text,
