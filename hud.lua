@@ -11,16 +11,16 @@ local function get_active_skill(player)
 	else return "builder", "Building" end
 end
 
-function quests.update_hud(player)
+function myquests.update_hud(player)
 	local name = player:get_player_name()
 	
-	if not quests.players or not quests.players[name] then return end
-	local ptable = quests.players[name]
+	if not myquests.players or not myquests.players[name] then return end
+	local ptable = myquests.players[name]
 	if not ptable.awards then return end
 
 	local skill, label = get_active_skill(player)
 	local count = ptable.awards[skill] or 0
-	local set = quests.settings[skill] or 10
+	local set = myquests.settings[skill] or 10
 	
 	local levels = {1, 5, 15, 50, 100}
 	local target = set * 100 
@@ -60,7 +60,7 @@ core.register_globalstep(function(dtime)
 	timer = timer + dtime
 	if timer > 0.5 then
 		for _, player in ipairs(core.get_connected_players()) do
-			quests.update_hud(player)
+			myquests.update_hud(player)
 		end
 		timer = 0
 	end
