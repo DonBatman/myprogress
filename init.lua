@@ -24,10 +24,10 @@ function myprogress.update_hud(player)
 
 	local txt = 
 		"⛏ Mining Lvl "..s.mlevel.." "..myprogress.get_bar("mining", s.mining, s.mlevel)..
-		"\n🪵 Lumber Lvl "..s.llevel.." "..myprogress.get_bar("lumbering", s.lumbering, s.llevel)..
-		"\n🏗 Build Lvl "..s.blevel.." "..myprogress.get_bar("building", s.building, s.blevel)..
-		"\n🚜 Farm Lvl "..s.flevel.." "..myprogress.get_bar("farming", s.farming, s.flevel)..
-		"\n🏜 Dig Lvl "..s.dlevel.." "..myprogress.get_bar("digging", s.digging, s.dlevel)
+		"\n Lumber Lvl "..s.llevel.." "..myprogress.get_bar("lumbering", s.lumbering, s.llevel)..
+		"\n Build Lvl "..s.blevel.." "..myprogress.get_bar("building", s.building, s.blevel)..
+		"\n Farm Lvl "..s.flevel.." "..myprogress.get_bar("farming", s.farming, s.flevel)..
+		"\n Dig Lvl "..s.dlevel.." "..myprogress.get_bar("digging", s.digging, s.dlevel)
 
 	if player_huds[name] then 
 		player:hud_change(player_huds[name], "text", txt)
@@ -62,7 +62,7 @@ function myprogress.add_xp(player, skill, amount)
 	if new_l == 20 and rewards[skill] then
     	local inv = player:get_inventory()
     	inv:add_item("main", rewards[skill])
-    	core.chat_send_player(name, "🎁 MASTERY REACHED! You have been awarded: " .. rewards[skill])
+    	core.chat_send_player(name, "MASTERY REACHED! You have been awarded: " .. rewards[skill])
 	end
 	end
 	myprogress.update_hud(player)
@@ -208,7 +208,7 @@ function award_for_digging(nname, playername)
 		for i, mult in ipairs(levels) do
 			if val == set_val * mult then
 				local tier = tier_names[i]
-				core.chat_send_player(playername, "🏆 Level "..i.." "..skill_name:upper().."!")
+				core.chat_send_player(playername, "Level "..i.." "..skill_name:upper().."!")
 				
 				inv:add_item("main", "myprogress:award_"..skill_name.."_"..tier)
 
@@ -238,7 +238,7 @@ core.add_particlespawner({
 })
 				if i == 5 and machine_name then
 					inv:add_item("main", machine_name)
-					core.chat_send_player(playername, "🔥 MASTERY: You've earned a machine!")
+					core.chat_send_player(playername, "MASTERY: You've earned a machine!")
 				end
 				return i
 			end
@@ -283,7 +283,7 @@ function award_for_placing(nname, playername)
 	for i, mult in ipairs(levels) do
 		if atable.builder == set * mult then
 			atable.builder_level = i
-			core.chat_send_player(playername, "🏗️ Builder Level "..i.."!")
+			core.chat_send_player(playername, "Builder Level "..i.."!")
 
 local pos = player:get_pos()
 pos.y = pos.y + 1.5

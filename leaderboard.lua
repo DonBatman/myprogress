@@ -29,7 +29,7 @@ core.register_chatcommand("leaderboard", {
 			return true, "No data found for " .. skill .. "."
 		end
 		
-		local output = "\n--- 🏆 " .. skill:upper() .. " LEADERBOARD ---"
+		local output = "\n--- " .. skill:upper() .. " LEADERBOARD ---"
 		for i, entry in ipairs(top_list) do
 			if i > 5 then break end
 			output = output .. "\n" .. i .. ". " .. entry.name .. ": " .. entry.score

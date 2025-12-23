@@ -17,7 +17,7 @@ core.register_node("myprogress:master_smelter", {
 	on_rightclick = function(pos, node, clicker)
 		local name = clicker:get_player_name()
 		if (myprogress.players[name].mlevel or 0) < 20 then
-			core.chat_send_player(name, "⛔ Access Denied: Mining Level 20 required.")
+			core.chat_send_player(name, "Access Denied: Mining Level 20 required.")
 			return
 		end
 		local fs = "size[8,9]label[3.2,0.5;Master Smelter]list[context;src;3.5,1.5;1,1;]list[context;dst;3,3;2,1;]list[current_player;main;0,5;8,4;]"
@@ -38,7 +38,7 @@ core.register_node("myprogress:master_sawmill", {
 	on_rightclick = function(pos, node, clicker)
 		local name = clicker:get_player_name()
 		if (myprogress.players[name].llevel or 0) < 20 then
-			core.chat_send_player(name, "⛔ Access Denied: Lumbering Level 20 required.")
+			core.chat_send_player(name, "Access Denied: Lumbering Level 20 required.")
 			return
 		end
 		local fs = "size[8,9]label[3.2,0.5;Master Sawmill]list[context;src;3.5,1.5;1,1;]list[context;dst;3,3;2,1;]list[current_player;main;0,5;8,4;]"
