@@ -1,181 +1,212 @@
-function myprogress.get_bar(skill, xp, level)
-	local base = myprogress.xp_scaling[skill]
-	local cur_xp = math.floor(base * (level ^ 1.5))
-	local nxt_xp = math.floor(base * ((level + 1) ^ 1.5))
-	local progress = math.max(0, math.min(1, (xp - cur_xp) / (nxt_xp - cur_xp)))
-	local bar = "[" .. string.rep("|", math.floor(progress * 10)) .. string.rep(".", 10 - math.floor(progress * 10)) .. "]"
-	return bar .. " " .. math.floor(progress * 100) .. "%"
-end
-
-function myprogress.update_hud(player)
-	local name = player:get_player_name()
-	local s = myprogress.players[name]
-	if not s then return end
-
-	local txt = 
-		" Mining Lvl "..s.mlevel.." "..myprogress.get_bar("mining", s.mining, s.mlevel)..
-		"\n Lumber Lvl "..s.llevel.." "..myprogress.get_bar("lumbering", s.lumbering, s.llevel)..
-		"\n Build Lvl "..s.blevel.." "..myprogress.get_bar("building", s.building, s.blevel)..
-		"\n Farm Lvl "..s.flevel.." "..myprogress.get_bar("farming", s.farming, s.flevel)..
-		"\n Dig Lvl "..s.dlevel.." "..myprogress.get_bar("digging", s.digging, s.dlevel)
-
-	if myprogress.player_huds[name] then 
-		player:hud_change(myprogress.player_huds[name], "text", txt)
-	else 
-		myprogress.player_huds[name] = player:hud_add({
-			hud_elem_type="text", 
-			position={x=0.02, y=0.95}, 
-			alignment={x=1,y=-1}, 
-			number=0xFFFFFF, 
-			text=txt
-		}) 
-	end
-end
-
 function myprogress.add_xp(player, skill, amount)
-	local name = player:get_player_name()
-	local s = myprogress.players[name]
-	s[skill] = s[skill] + amount
-	local l_key = skill:sub(1,1).."level"
-	local new_l = math.floor((s[skill] / myprogress.xp_scaling[skill]) ^ (1/1.5))
-	if new_l > s[l_key] then
-		s[l_key] = new_l
-		core.chat_send_player(name, "★ LEVEL UP: "..skill:upper().." IS NOW "..new_l.." ★")
-	local rewards = {
-    mining = "myprogress:master_smelter",
-    lumbering = "myprogress:master_sawmill",
-    digging = "myprogress:master_sifter",
-    building = "myprogress:master_architect_table",
-    farming = "myprogress:master_harvester"
-}
+    if not player or not skill or not amount then return end
+    
+    local name = player:get_player_name()
+    local stats = myprogress.players[name]
+    if not stats then 
+        myprogress.players[name] = {
+            total_xp=0, mining=0, mlevel=0, lumbering=0, llevel=0,
+            digging=0, dlevel=0, farming=0, flevel=0, building=0,
+            blevel=0, combat=0, clevel=0
+        }
+        stats = myprogress.players[name]
+    end
 
-	if new_l == 20 and rewards[skill] then
-    	local inv = player:get_inventory()
-    	inv:add_item("main", rewards[skill])
-    	core.chat_send_player(name, "MASTERY REACHED! You have been awarded: " .. rewards[skill])
-	end
-	end
-	myprogress.update_hud(player)
-end
-function award_for_digging(nname, playername)
-	local ptable = myquests.players[playername]
-	if not ptable or not ptable.awards then return end
-	
-	local atable = ptable.awards
-	local player = core.get_player_by_name(playername)
-	if not player then return end
-	local inv = player:get_inventory()
+    local l_key = "mlevel"
+    if skill == "mining"        then l_key = "mlevel"
+    elseif skill == "digging"   then l_key = "dlevel"
+    elseif skill == "combat"    then l_key = "clevel"
+    elseif skill == "lumbering" then l_key = "llevel"
+    elseif skill == "farming"   then l_key = "flevel"
+    elseif skill == "building"  then l_key = "blevel"
+    end
 
-	local function check_level(val, set_val, skill_name, machine_name)
-		local levels = {1, 5, 15, 50, 100}
-		local tier_names = {"wood", "stone", "bronze", "silver", "gold"}
-		
-		for i, mult in ipairs(levels) do
-			if val == set_val * mult then
-				local tier = tier_names[i]
-				core.chat_send_player(playername, "Level "..i.." "..skill_name:upper().."!")
-				
-				inv:add_item("main", "myprogress:award_"..skill_name.."_"..tier)
+    stats[skill] = (stats[skill] or 0) + amount
+    stats.total_xp = (stats.total_xp or 0) + amount
 
-		local pos = player:get_pos()
-		pos.y = pos.y + 1.5
-		
-		core.sound_play("default_cool_item", {
-    		pos = pos,
-    		gain = 1.0,
-    		max_hear_distance = 10,
-})
+    local current_level = stats[l_key] or 0
+    local scale = myprogress.xp_scaling[skill] or 50
+    local next_lvl_xp = math.pow(current_level + 1, 2) * scale
 
-core.add_particlespawner({
-    amount = 40,
-    time = 0.1,
-    minpos = {x=pos.x-0.2, y=pos.y, z=pos.z-0.2},
-    maxpos = {x=pos.x+0.2, y=pos.y+0.5, z=pos.z+0.2},
-    minvel = {x=-3, y=1, z=-3},
-    maxvel = {x=3, y=5, z=3},
-    minacc = {x=0, y=-9.8, z=0},
-    maxacc = {x=0, y=-9.8, z=0},
-    minexptime = 1,
-    maxexptime = 2,
-    minsize = 1,
-    maxsize = 3,
-    texture = "default_item_smoke.png^[colorize:yellow:200",
-})
-				if i == 5 and machine_name then
-					inv:add_item("main", machine_name)
-					core.chat_send_player(playername, "MASTERY: You've earned a machine!")
-				end
-				return i
-			end
-		end
-		return nil
-	end
-
-	if string.find(nname, "stone") then
-		atable.miner = atable.miner + 1
-		local lvl = check_level(atable.miner, myquests.settings.miner, "miner", "myprogress:master_smelter")
-		if lvl then atable.miner_level = lvl end
-	
-	elseif string.find(nname, "sand") or string.find(nname, "dirt") then
-		atable.digger = atable.digger + 1
-		local lvl = check_level(atable.digger, myquests.settings.digger, "digger", "myprogress:master_sifter")
-		if lvl then atable.digger_level = lvl end
-
-	elseif string.find(nname, "tree") then
-		atable.logger = atable.logger + 1
-		local lvl = check_level(atable.logger, myquests.settings.logger, "logger", "myprogress:master_sawmill")
-		if lvl then atable.logger_level = lvl end
-
-	elseif string.find(nname, "farming:wheat") then
-		atable.farmer = atable.farmer + 1
-		local lvl = check_level(atable.farmer, myquests.settings.farmer, "farmer", "myprogress:master_harvester")
-		if lvl then atable.farmer_level = lvl end
-	end
+    if myquests.settings.difficulty == "easy" then
+        next_lvl_xp = math.ceil(next_lvl_xp * 0.5)
+    end
+    
+    if stats[skill] >= next_lvl_xp then
+        stats[l_key] = current_level + 1
+        stats[skill] = 0
+        
+        myprogress.level_up_effect(player)
+        core.sound_play("default_cool_lava", {to_player = name, gain = 1.0})
+        
+        core.chat_send_player(name, core.colorize("#00FF00", ">> LEVEL UP: " .. skill:upper() .. " is now " .. stats[l_key] .. "! <<"))
+    end
+    myprogress.update_hud(player)
 end
 
-function award_for_placing(nname, playername)
-	if not myquests.players[playername] then return end
-	local atable = myquests.players[playername].awards
-	local player = core.get_player_by_name(playername)
-	local inv = player:get_inventory()
+function myprogress.level_up_effect(player)
+    if not player then return end
+    local pos = player:get_pos()
+    
+    core.sound_play("default_gravel_footstep", {
+        pos = pos,
+        gain = 1.0,
+        max_hear_distance = 10,
+    })
 
-	atable.builder = atable.builder + 1
-	
-	local levels = {1, 5, 15, 50, 100}
-	local tiers = {"wood", "stone", "bronze", "silver", "gold"}
-	local set = myquests.settings.builder
-
-	for i, mult in ipairs(levels) do
-		if atable.builder == set * mult then
-			atable.builder_level = i
-			core.chat_send_player(playername, "Builder Level "..i.."!")
-
-local pos = player:get_pos()
-pos.y = pos.y + 1.5
-
-core.sound_play("default_cool_item", {
-    pos = pos,
-    gain = 1.0,
-    max_hear_distance = 10,
-})
-
-core.add_particlespawner({
-    amount = 40,
-    time = 0.1,
-    minpos = {x=pos.x-0.2, y=pos.y, z=pos.z-0.2},
-    maxpos = {x=pos.x+0.2, y=pos.y+0.5, z=pos.z+0.2},
-    minvel = {x=-3, y=1, z=-3},
-    maxvel = {x=3, y=5, z=3},
-    minacc = {x=0, y=-9.8, z=0},
-    maxacc = {x=0, y=-9.8, z=0},
-    minexptime = 1,
-    maxexptime = 2,
-    minsize = 1,
-    maxsize = 3,
-    texture = "default_item_smoke.png^[colorize:yellow:200",
-})
-			inv:add_item("main", "myprogress:award_builder_"..tiers[i])
-			if i == 5 then inv:add_item("main", "myprogress:master_architect_table") end
-		end
-	end
+    core.add_particlespawner({
+        amount = 60,
+        time = 0.5,
+        minpos = {x = pos.x - 0.5, y = pos.y + 0.2, z = pos.z - 0.5},
+        maxpos = {x = pos.x + 0.5, y = pos.y + 2.0, z = pos.z + 0.5},
+        minvel = {x = -2, y = 2, z = -2},
+        maxvel = {x = 2, y = 5, z = 2},
+        minacc = {x = 0, y = -5, z = 0},
+        maxacc = {x = 0, y = -9, z = 0},
+        minexptime = 1,
+        maxexptime = 1.5,
+        minsize = 2,
+        maxsize = 5,
+        collisiondetection = true,
+        texture = "default_item_smoke.png^[colorize:#FFD700:200",
+        glow = 14,
+    })
 end
+
+function award_for_digging(node_name, player_name)
+    local player = core.get_player_by_name(player_name)
+    if not player or not myquests.players[player_name] then return end
+    local q = myquests.players[player_name]
+    
+    for _, n in pairs(myprogress_nodes.mining) do
+        if node_name == n then
+            q.awards.miner = (q.awards.miner or 0) + 1
+            if q.awards.miner >= (myquests.settings.miner or 10) then
+                q.awards.miner = 0 
+                q.awards.miner_level = (q.awards.miner_level or 0) + 1
+                
+                local tier = "bronze"
+                if q.awards.miner_level >= 10 then tier = "master"
+                elseif q.awards.miner_level >= 8 then tier = "diamond"
+                elseif q.awards.miner_level >= 5 then tier = "gold"
+                elseif q.awards.miner_level >= 3 then tier = "silver"
+                end
+                
+                player:get_inventory():add_item("main", "myprogress:award_miner_"..tier.." 1")
+                core.chat_send_player(player_name, "You earned a " .. tier:upper() .. " Mining Trophy!")
+            end
+        end
+    end
+end
+
+function myprogress.show_stats_formspec(name, tab)
+    local p = myprogress.players[name]
+    if not myquests.players[name] then
+        myquests.players[name] = {awards = {}}
+    end
+    local q = myquests.players[name]
+
+    if not p then return end
+
+	tab = tab or 0
+    local formspec = "size[10,10.2]" ..
+        "background[0,0;10,10.2;gui_formbg.png;true]" ..
+        "tabheader[0,0;stats_tabs;Stats,Trophy Gallery;" .. (tab + 1) .. ";true;false]"
+
+    if tab == 0 then
+        formspec = formspec .. "label[3.8,0.5;== PLAYER STATISTICS ==]" ..
+            "label[4.2,1;Total XP: " .. (p.total_xp or 0) .. "]"
+        
+        local skills = {
+            {id="mining",    l="mlevel",  c="#FFD700", icon="default_tool_steelpick.png", n="Mining"},
+            {id="digging",   l="dlevel",  c="#C0C0C0", icon="default_tool_steelshovel.png", n="Digging"},
+            {id="lumbering", l="llevel",  c="#55FF55", icon="default_tool_steelaxe.png", n="Lumbering"},
+            {id="farming",   l="flevel",  c="#00FF00", icon="farming_wheat_8.png", n="Farming"},
+            {id="building",  l="blevel",  c="#AAAAAA", icon="default_brick.png", n="Building"},
+            {id="combat",    l="clevel",  c="#FF5555", icon="default_tool_steelsword.png", n="Combat"}
+        }
+
+        local y = 2
+        for _, s in ipairs(skills) do
+            local lvl = p[s.l] or 0
+            local xp = p[s.id] or 0
+            local scale = (myprogress.xp_scaling and myprogress.xp_scaling[s.id]) or 50
+            local goal = math.pow(lvl + 1, 2) * scale
+            if (core.settings:get("myprogress_difficulty") or "hard") == "easy" then goal = math.ceil(goal * 0.5) end
+            local percent = (goal > 0) and math.min(100, math.floor((xp / goal) * 100)) or 0
+
+            formspec = formspec ..
+                "image[1," .. y .. ";0.8,0.8;" .. s.icon .. "]" ..
+                "label[2," .. y .. ";" .. core.colorize(s.c, s.n) .. "]" ..
+                "label[2," .. y + 0.4 .. ";Level: " .. lvl .. "]" ..
+                "box[4.5," .. y + 0.1 .. ";4,0.4;#333333]" ..
+                "box[4.5," .. y + 0.1 .. ";" .. (4 * (percent/100)) .. ",0.4;" .. s.c .. "]" ..
+                "label[5.8," .. y + 0.5 .. ";" .. xp .. " / " .. goal .. " XP]"
+            y = y + 1
+        end
+    else
+        formspec = formspec .. "label[3.8,0.5;== TROPHY GALLERY ==]"
+        local trophies = {
+            {id="miner",     key="miner_level",  n="Mining"},
+            {id="digger",    key="digger_level", n="Digging"},
+            {id="logger", key="logger_level", n="Lumbering"},
+            {id="farmer",   key="farmer_level", n="Farming"},
+            {id="builder",   key="builder_level", n="Building"},
+            {id="combat",    key="slayer_level", n="Slayer"}
+        }
+        local tiers = {
+            {id="bronze", req=1}, {id="silver", req=3}, {id="gold", req=5}, 
+            {id="mese", req=8}, {id="diamond", req=10}
+        }
+
+        local total_unlocked = 0
+        local total_possible = #trophies * #tiers
+
+        for row, t in ipairs(trophies) do
+            local y_pos = 0.2 + row
+            formspec = formspec .. "label[0.5," .. (y_pos + 0.3) .. ";" .. t.n .. "]"
+            
+            local awards = q.awards or {}
+            local p_lvl = awards[t.key] or 0
+            
+            for col, tier in ipairs(tiers) do
+                local item = "myprogress:award_" .. t.id .. "_" .. tier.id
+                if p_lvl < tier.req then
+                    formspec = formspec .. "item_image[" .. (col + 2) .. "," .. y_pos .. ";0.8,0.8;" .. item .. "]" ..
+                               "image[" .. (col + 2) .. "," .. y_pos .. ";0.8,0.8;default_stone.png^[opacity:180]"
+                else
+                    formspec = formspec .. "item_image[" .. (col + 2) .. "," .. y_pos .. ";1,1;" .. item .. "]"
+                    total_unlocked = total_unlocked + 1
+                end
+            end
+
+		local completion_pct = math.floor((total_unlocked / total_possible) * 100)
+        local bar_color = "#00FF00" 
+        if completion_pct < 30 then bar_color = "#FF5555" 
+        elseif completion_pct < 70 then bar_color = "#FFFF55" end 
+
+        formspec = formspec .. 
+            "label[1,8.0;Total Completion: ]" .. --completion_pct .. "% (" .. total_unlocked .. "/" .. total_possible .. ")]" ..
+            "box[1,7.5;8,0.4;#333333]" .. 
+            "box[1,8.5;" .. (8 * (completion_pct / 100)) .. ",0.4;" .. bar_color .. "]" ..
+            "button_exit[4,9.8;2,0.5;close;Close]"
+        --
+        end
+    end
+
+    core.show_formspec(name, "myprogress:stats", formspec)
+end
+core.register_on_player_receive_fields(function(player, formname, fields)
+    if formname ~= "myprogress:stats" then return end
+    if fields.stats_tabs then
+        local tab = tonumber(fields.stats_tabs) - 1
+        myprogress.show_stats_formspec(player:get_player_name(), tab)
+    end
+    if fields.stats_tabs then
+    local name = player:get_player_name()
+    	core.sound_play("gui_click", {to_player = name, gain = 0.5})
+    	
+    	local tab = tonumber(fields.stats_tabs) - 1
+    	myprogress.show_stats_formspec(name, tab)
+	end
+end)

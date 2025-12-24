@@ -1,71 +1,77 @@
-local hud_data = {}
+function myprogress.update_hud(player)
+    if not player then return end
+    local name = player:get_player_name()
+    local stats = myprogress.players[name]
+    if not stats then return end
 
-local function get_active_skill(player)
-	local stack = player:get_wielded_item()
-	local tool_name = stack:get_name()
-	
-	if tool_name:find("pick") then return "miner", "Mining"
-	elseif tool_name:find("axe") then return "logger", "Lumbering"
-	elseif tool_name:find("shovel") then return "digger", "Digging"
-	elseif tool_name:find("hoe") then return "farmer", "Farming"
-	else return "builder", "Building" end
+    if myprogress.player_huds[name] then
+        for _, id in pairs(myprogress.player_huds[name]) do
+            player:hud_remove(id)
+        end
+    end
+    myprogress.player_huds[name] = {}
+
+    local function format_num(n)
+        if not n then return "0" end
+        return n >= 1000 and (math.floor(n/100)/10 .. "k") or n
+    end
+
+    local overall = (stats.mlevel or 0) + (stats.llevel or 0) + (stats.dlevel or 0) + 
+                    (stats.flevel or 0) + (stats.blevel or 0) + (stats.clevel or 0)
+    
+    table.insert(myprogress.player_huds[name], player:hud_add({
+        hud_elem_type = "text", position = {x=0, y=0}, offset = {x=20, y=20},
+        text = "YOU ARE LEVEL: " .. overall, number = 0x00FFFF, alignment = {x=1, y=1}
+    }))
+
+    table.insert(myprogress.player_huds[name], player:hud_add({
+        hud_elem_type = "text", position = {x=0, y=1}, offset = {x=20, y=-240},
+        text = "TOTAL EXPERIENCE: " .. format_num(stats.total_xp or 0), number = 0xFFFF00, alignment = {x=1, y=0}
+    }))
+
+    local skills = {
+        {k="mining",    l="MINING  ", c=0xffffff, o=0},
+        {k="lumbering", l="LUMBER  ", c=0x55ff55, o=20},
+        {k="digging",   l="DIGGING ", c=0xffd700, o=40},
+        {k="farming",   l="FARMING ", c=0x00ff00, o=60},
+        {k="building",  l="BUILDING", c=0xaaaaaa, o=80},
+        {k="combat",    l="COMBAT  ", c=0xff5555, o=100}
+    }
+
+    for _, s in ipairs(skills) do
+        local l_key = "mlevel"
+        if s.k == "lumbering" then l_key = "llevel"
+        elseif s.k == "digging"   then l_key = "dlevel"
+        elseif s.k == "farming"   then l_key = "flevel"
+        elseif s.k == "building"  then l_key = "blevel"
+        elseif s.k == "combat"    then l_key = "clevel" end
+        
+        local cur_xp = stats[s.k] or 0
+        local cur_lvl = stats[l_key] or 0
+        
+        local scale = myprogress.xp_scaling[s.k] or 50
+        local goal = math.pow(cur_lvl + 1, 2) * scale
+        
+        if myquests.settings.difficulty == "easy" then
+            goal = math.ceil(goal * 0.5)
+        end
+        
+        local bar = ""
+        local percent = (goal > 0) and (cur_xp / goal) or 0
+        local portion = math.floor(percent * 10)
+        portion = math.min(math.max(portion, 0), 10)
+        
+        for i=1,10 do bar = bar .. (i <= portion and "|" or ".") end
+
+        local display_text = s.l .. " Lv." .. cur_lvl .. " [" .. bar .. "] " .. format_num(cur_xp) .. "/" .. format_num(goal)
+
+        table.insert(myprogress.player_huds[name], player:hud_add({
+            hud_elem_type = "text", 
+            position = {x=0, y=1}, 
+            offset = {x=20, y=-210 + s.o},
+            text = display_text,
+            number = s.c, 
+            alignment = {x=1, y=0}
+        }))
+    end
 end
-
-function myquests.update_hud(player)
-	local name = player:get_player_name()
-	
-	if not myquests.players or not myquests.players[name] then return end
-	local ptable = myquests.players[name]
-	if not ptable.awards then return end
-
-	local skill, label = get_active_skill(player)
-	local count = ptable.awards[skill] or 0
-	local set = myquests.settings[skill] or 10
-	
-	local levels = {1, 5, 15, 50, 100}
-	local target = set * 100 
-	for _, mult in ipairs(levels) do
-		if count < set * mult then
-			target = set * mult
-			break
-		end
-	end
-
-	local percent = math.min(math.floor((count / target) * 100), 100)
-	local bar_text = label .. ": " .. count .. " / " .. target .. " (" .. percent .. "%)"
-
-	local hud_color = 0xFFFFFF
-	if percent >= 90 then hud_color = 0xFFD700
-	elseif percent >= 50 then hud_color = 0x00FF00
-	elseif percent >= 25 then hud_color = 0x00CCFF end
-
-	if not hud_data[name] then
-		hud_data[name] = player:hud_add({
-			hud_elem_type = "text",
-			position = {x = 0.5, y = 0.05},
-			offset = {x = 0, y = 20},
-			text = bar_text,
-			alignment = {x = 0, y = 0},
-			number = hud_color,
-			scale = {x = 100, y = 100},
-		})
-	else
-		player:hud_change(hud_data[name], "text", bar_text)
-		player:hud_change(hud_data[name], "number", hud_color)
-	end
-end
-
-local timer = 0
-core.register_globalstep(function(dtime)
-	timer = timer + dtime
-	if timer > 0.5 then
-		for _, player in ipairs(core.get_connected_players()) do
-			myquests.update_hud(player)
-		end
-		timer = 0
-	end
-end)
-
-core.register_on_leaveplayer(function(player)
-	hud_data[player:get_player_name()] = nil
-end)
