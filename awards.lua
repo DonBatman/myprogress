@@ -101,7 +101,7 @@ function award_for_lumbering(player_name)
         q.awards.logger_level = (q.awards.logger_level or 0) + 1
         local tier = get_tier(q.awards.logger_level)
         
-        player:get_inventory():add_item("main", "myprogress:award_lumbering_" .. tier .. " 1")
+        player:get_inventory():add_item("main", "myprogress:award_logger_" .. tier .. " 1")
         
         core.chat_send_player(player_name, core.colorize("#55FF55", 
             "LUMBER QUEST LEVEL " .. q.awards.logger_level .. "! You earned a " .. tier:upper() .. " Trophy!"))
