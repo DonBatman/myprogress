@@ -1,245 +1,145 @@
-local awards = {"Miner", "Digger", "Logger", "Builder", "Farmer", "Combat"}
+-- ==========================================================
+-- NODE XP DEFINITIONS (nodes.lua)
+-- ==========================================================
+-- This file defines which nodes give XP and how much.
+-- Supports: Default, Ethereal, MyOres, and MoreTrees.
 
-local award_levels = {
-    {"Bronze", "#cd7f32"},
-    {"Silver", "#c0c0c0"},
-    {"Gold",   "#ffd700"},
-    {"Diamond","#00ffff"},
-    {"Master", "#ff00ff"}
+-- XP values have been adjusted to 1 point per node harvest
+-- to ensure 1 node = 1 point of progress.
+
+myprogress_nodes = {}
+
+-- 1. Digging (Soil, Sand, Gravel, and Modded Soils)
+myprogress_nodes.digging = {
+    ["default:dirt"] = 1,
+    ["default:dirt_with_grass"] = 1,
+    ["default:dirt_with_dry_grass"] = 1,
+    ["default:dirt_with_snow"] = 1,
+    ["default:sand"] = 1,
+    ["default:desert_sand"] = 1,
+    ["default:gravel"] = 1,
+    ["default:clay"] = 1,
+    ["default:silver_sand"] = 1,
+    -- Ethereal Soils
+    ["ethereal:crystal_dirt"] = 1,
+    ["ethereal:fiery_dirt"] = 1,
+    ["ethereal:gray_dirt"] = 1,
+    ["ethereal:cold_dirt"] = 1,
+    ["ethereal:mushroom_dirt"] = 1,
+    ["ethereal:jungle_dirt"] = 1,
 }
 
-for _, a in pairs(awards) do
-    local al = string.lower(a)
-    for _, level_data in ipairs(award_levels) do
-        local b = level_data[1]
-        local c = level_data[2]
-        local bl = string.lower(b)
-
-        core.register_node("myprogress:award_"..al.."_"..bl, {
-            description = b.." "..a.." Trophy",
-            drawtype = "mesh",
-            mesh = "myprogress_award_"..al..".obj", 
-            tiles = {"default_silver_sand.png^[colorize:"..c}, 
-            paramtype = "light",
-            paramtype2 = "facedir",
-            groups = {cracky = 3},
-            light_source = 3,
-        })
-    end
-end
-
-local function spawn_particles(pos, texture)
-	core.add_particlespawner({
-		amount = 10, time = 0.5,
-		minpos = pos, maxpos = pos,
-		minvel = {x=-1, y=1, z=-1}, maxvel = {x=1, y=2, z=1},
-		texture = texture, 
-	})
-end
-
-local awards = {"Miner", "Digger", "Logger", "Builder", "Farmer"}
-local award_levels = {
-	{"Bronze", "#cd7f32"},
-	{"Silver", "#c0c0c0"},
-	{"Gold",   "#ffd700"},
-	{"Diamond","#00ffff"},
-	{"Master", "#ff00ff"}
+-- 2. Mining (Stone and Ores, including MyOres)
+myprogress_nodes.mining = {
+    ["default:stone"] = 1,
+    ["default:desert_stone"] = 1,
+    ["default:cobble"] = 1,
+    ["default:stone_with_coal"] = 2,
+    ["default:stone_with_iron"] = 3,
+    ["default:stone_with_gold"] = 5,
+    ["default:stone_with_mese"] = 8,
+    ["default:stone_with_diamond"] = 15,
+    -- MyOres Support
+    ["myores:tin_ore"] = 2,
+    ["myores:silver_ore"] = 3,
+    ["myores:platinum_ore"] = 6,
+    ["myores:aluminum_ore"] = 2,
+    ["myores:copper_ore"] = 2,
+    ["myores:lead_ore"] = 2,
+    ["myores:zinc_ore"] = 2,
+    ["myores:ruby_ore"] = 10,
+    ["myores:sapphire_ore"] = 10,
+    ["myores:emerald_ore"] = 10,
+    -- Ethereal Mining
+    ["ethereal:crystal_ore"] = 8,
 }
 
-for _, a in pairs(awards) do
-	local al = string.lower(a)
-	for _, level_data in ipairs(award_levels) do
-		local b = level_data[1]
-		local c = level_data[2]
-		local bl = string.lower(b)
-
-		core.register_node("myprogress:award_"..al.."_"..bl, {
-			description = b.." "..a.." Trophy",
-			drawtype = "mesh",
-			mesh = "myprogress_award_"..al..".obj", 
-			tiles = {"default_silver_sand.png^[colorize:"..c}, 
-			paramtype = "light",
-			paramtype2 = "facedir",
-			groups = {cracky = 3}
-		})
-	end
-end
-
-core.register_node("myprogress:master_smelter", {
-	description = "Master Miner's Smelter (Level 20 Required)",
-	tiles = {"myprogress_miners_smelter.png"},
-	drawtype = "mesh",
-	mesh = "myprogress_miners_smelter.obj",
-	paramtype2 = "facedir",
-	groups = {cracky = 2},
-	on_rightclick = function(pos, node, clicker)
-		local name = clicker:get_player_name()
-		if (myprogress.players[name].mlevel or 0) < 20 then
-			core.chat_send_player(name, "Access Denied: Mining Level 20 required.")
-			return
-		end
-		local fs = "size[8,9]label[3.2,0.5;Master Smelter]list[context;src;3.5,1.5;1,1;]list[context;dst;3,3;2,1;]list[current_player;main;0,5;8,4;]"
-		core.show_formspec(name, "myprogress:smelter_"..core.pos_to_string(pos), fs)
-	end,
-	on_construct = function(pos)
-		local inv = core.get_meta(pos):get_inventory()
-		inv:set_size("src", 1) inv:set_size("dst", 2)
-	end,
-})
-
-core.register_node("myprogress:master_sawmill", {
-	description = "Master Lumberer's Sawmill (Level 20 Required)",
-	tiles = {"myprogress_loggers_mill.png"},
-	drawtype = "mesh",
-	mesh = "myprogress_loggers_mill.obj",
-	groups = {choppy = 2},
-	on_rightclick = function(pos, node, clicker)
-		local name = clicker:get_player_name()
-		if (myprogress.players[name].llevel or 0) < 20 then
-			core.chat_send_player(name, "Access Denied: Lumbering Level 20 required.")
-			return
-		end
-		local fs = "size[8,9]label[3.2,0.5;Master Sawmill]list[context;src;3.5,1.5;1,1;]list[context;dst;3,3;2,1;]list[current_player;main;0,5;8,4;]"
-		core.show_formspec(name, "myprogress:sawmill_"..core.pos_to_string(pos), fs)
-	end,
-	on_construct = function(pos)
-		local inv = core.get_meta(pos):get_inventory()
-		inv:set_size("src", 1) inv:set_size("dst", 2)
-	end,
-})
-
-core.register_node("myprogress:master_harvester", {
-	description = "Master Farmer's Harvester (Level 20 Required)",
-	tiles = {"default_steel_block.png^[colorize:#00FF00:100"},
-	groups = {cracky = 2},
-	on_rightclick = function(pos, node, clicker)
-		local name = clicker:get_player_name()
-		if (myprogress.players[name].flevel or 0) < 20 then
-			core.chat_send_player(name, "Access Denied: Farming Level 20 required.")
-			return
-		end
-		local fs = "size[8,9]label[3.2,0.5;Harvester]list[context;src;3.5,1.5;1,1;]list[context;dst;3,3;2,1;]list[current_player;main;0,5;8,4;]"
-		core.show_formspec(name, "myprogress:harvester_"..core.pos_to_string(pos), fs)
-	end,
-	on_construct = function(pos)
-		local inv = core.get_meta(pos):get_inventory()
-		inv:set_size("src", 1) inv:set_size("dst", 2)
-	end,
-})
-
-core.register_node("myprogress:master_sifter", {
-	description = "Master Digger's Sifter (Level 20 Required)",
-	tiles = {"default_steel_block.png^[colorize:#FFD700:100"},
-	groups = {cracky = 2},
-	on_rightclick = function(pos, node, clicker)
-		local name = clicker:get_player_name()
-		if (myprogress.players[name].dlevel or 0) < 20 then
-			core.chat_send_player(name, "Access Denied: Digging Level 20 required.")
-			return
-		end
-		local fs = "size[8,9]label[3.2,0.5;Sifter]list[context;src;3.5,1.5;1,1;]list[context;dst;3,3;2,1;]list[current_player;main;0,5;8,4;]"
-		core.show_formspec(name, "myprogress:sifter_"..core.pos_to_string(pos), fs)
-	end,
-	on_construct = function(pos)
-		local inv = core.get_meta(pos):get_inventory()
-		inv:set_size("src", 1) inv:set_size("dst", 2)
-	end,
-})
-
-core.register_abm({
-	nodenames = {"myprogress:master_harvester"},
-	interval = 1.0,
-	chance = 1,
-	action = function(pos, node)
-		local inv = core.get_meta(pos):get_inventory()
-		local stack = inv:get_stack("src", 1)
-		if stack:is_empty() then return end
-
-		local recipes = {
-			["farming:wheat"]  = "farming:bread 3",
-			["farming:cotton"] = "farming:string 6",
-			["farming:corn"]   = "farming:corn_cob 3",
-		}
-
-		local out = recipes[stack:get_name()]
-		if out and inv:room_for_item("dst", out) then
-			stack:take_item(1)
-			inv:set_stack("src", 1, stack)
-			inv:add_item("dst", out)
-			spawn_particles(pos, "farming_wheat_8.png")
-		end
-	end,
-})
-
-core.register_abm({
-	nodenames = {"myprogress:master_sifter"},
-	interval = 1.5,
-	chance = 1,
-	action = function(pos, node)
-		local inv = core.get_meta(pos):get_inventory()
-		local stack = inv:get_stack("src", 1)
-		if stack:is_empty() then return end
-
-		local input = stack:get_name()
-		local output = nil
-		local roll = math.random(1, 100)
-
-		if input == "default:gravel" then
-			if roll <= 5 then output = "default:diamond" 
-			elseif roll <= 20 then output = "default:iron_lump" 
-			else output = "default:flint" end
-		elseif input == "default:sand" then
-			if roll <= 15 then output = "default:tin_lump"
-			else output = "default:clay_lump" end
-		end
-
-		if output and inv:room_for_item("dst", output) then
-			stack:take_item(1)
-			inv:set_stack("src", 1, stack)
-			inv:add_item("dst", output)
-		end
-	end,
-})
-
-local trophies = {
-    {name = "miner",     desc = "Mining"},
-    {name = "digger",    desc = "Digging"},
-    {name = "combat",    desc = "Slayer"},
-    {name = "builder",   desc = "Builder"},
-    {name = "logger", 	desc = "Logger"},
-    {name = "farmer",   desc = "Farmer"}
+-- 3. Lumbering (Trees from Default, MoreTrees, and Ethereal)
+myprogress_nodes.lumbering = {
+    ["default:tree"] = 1,
+    ["default:jungletree"] = 1,
+    ["default:pine_tree"] = 1,
+    ["default:acacia_tree"] = 1,
+    ["default:aspen_tree"] = 1,
+    -- MoreTrees Support
+    ["moretrees:apple_tree_trunk"] = 1,
+    ["moretrees:birch_trunk"] = 1,
+    ["moretrees:beech_trunk"] = 1,
+    ["moretrees:cedar_trunk"] = 1,
+    ["moretrees:cherry_trunk"] = 1,
+    ["moretrees:fir_trunk"] = 1,
+    ["moretrees:oak_trunk"] = 1,
+    ["moretrees:palm_trunk"] = 1,
+    ["moretrees:rubber_tree_trunk"] = 1,
+    ["moretrees:sequoia_trunk"] = 1,
+    ["moretrees:spruce_trunk"] = 1,
+    ["moretrees:willow_trunk"] = 1,
+    -- Ethereal Trees
+    ["ethereal:willow_trunk"] = 1,
+    ["ethereal:redwood_trunk"] = 1,
+    ["ethereal:frost_trunk"] = 1,
+    ["ethereal:yellow_trunk"] = 1,
+    ["ethereal:palm_trunk"] = 1,
+    ["ethereal:banana_trunk"] = 1,
+    ["ethereal:birch_trunk"] = 1,
+    ["ethereal:bamboo"] = 1,
 }
 
-local tiers = {
-    {id = "bronze",  label = "Bronze",  color = "#CD7F32"},
-    {id = "silver",  label = "Silver",  color = "#C0C0C0"},
-    {id = "gold",    label = "Gold",    color = "#FFD700"},
-    {id = "mese",    label = "Mese",    color = "#E2E200"},
-    {id = "diamond", label = "Diamond", color = "#00FFFF"}
+-- 4. Farming (Harvesting - Full Redo Restored)
+myprogress_nodes.farming = {
+    -- Default/Base Farming
+    ["farming:wheat_8"] = 1,
+    ["farming:cotton_8"] = 1,
+    ["farming:corn_8"] = 1,
+    ["farming:coffee_5"] = 1,
+    ["farming:raspberry_4"] = 1,
+    ["farming:blueberry_4"] = 1,
+    ["farming:beanbush_4"] = 1,
+    ["farming:grapebush_3"] = 1,
+    ["farming:barley_7"] = 1,
+    ["farming:rhubarb_3"] = 1,
+    ["farming:potato_4"] = 1,
+    ["farming:tomato_7"] = 1,
+    ["farming:carrot_8"] = 1,
+    ["farming:garlic_5"] = 1,
+    ["farming:onion_5"] = 1,
+    ["farming:pepper_5"] = 1,
+    ["farming:pumpkin_8"] = 1,
+    ["farming:cucumber_4"] = 1,
+    ["farming:cabbage_6"] = 1,
+    ["farming:lettuce_5"] = 1,
+    ["farming:blackberry_4"] = 1,
+    ["farming:vanilla_8"] = 1,
+    ["farming:soybean_5"] = 1,
+    ["farming:rice_8"] = 1,
+    ["farming:mint_4"] = 1,
+    ["farming:artichoke_5"] = 1,
+    ["farming:parsley_3"] = 1,
+    ["farming:spinach_4"] = 1,
+
+    -- Trees & Fruit
+    ["default:apple"] = 1,
+    ["default:papyrus"] = 1,
+    ["default:cactus"] = 1,
+    ["farming:cocoa_beans"] = 1,
+    ["farming:pineapple_8"] = 1,
+
+    -- Ethereal Farming
+    ["ethereal:strawberry_7"] = 1,
+    ["ethereal:onion_5"] = 1,
+    ["ethereal:banana"] = 1,
+    ["ethereal:orange"] = 1,
+    ["ethereal:coconut"] = 1,
+    ["ethereal:golden_apple"] = 5,
+    ["ethereal:wild_onion_4"] = 1,
+    ["ethereal:fern"] = 1,
+    ["ethereal:snow_onion"] = 1,
 }
 
-for _, t in ipairs(trophies) do
-    local mesh_file = "myprogress_award_" .. t.name .. ".obj"
-    
-    for _, tier in ipairs(tiers) do
-        local node_name = "myprogress:award_" .. t.name .. "_" .. tier.id
-        
-        core.register_node(node_name, {
-            description = tier.label .. " " .. t.desc .. " Trophy",
-            drawtype = "mesh",
-            mesh = mesh_file, 
-            
-            tiles = {"default_stone.png^[colorize:" .. tier.color .. ":160"},
-            
-            paramtype = "light",
-            paramtype2 = "facedir",
-            groups = {choppy = 2, oddly_breakable_by_hand = 3},
-            selection_box = {
-                type = "fixed",
-                fixed = {-0.3, -0.5, -0.3, 0.3, 0.8, 0.3}
-            },
-            light_source = (tier.id == "mese" or tier.id == "diamond") and 5 or 0,
-            on_place = core.rotate_node
-        })
-    end
-end
+-- 5. Special Machine Unlocks (Level 20 Rewards)
+myprogress_nodes.machines = {
+    ["myprogress:master_smelter"]   = { skill = "mining",  level = 20 },
+    ["myprogress:master_sawmill"]   = { skill = "lumbering", level = 20 },
+    ["myprogress:master_harvester"] = { skill = "farming", level = 20 },
+    ["myprogress:master_sifter"]    = { skill = "digging", level = 20 },
+}

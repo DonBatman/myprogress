@@ -1,44 +1,70 @@
+-- ==========================================================
+-- HUD DEFINITIONS
+-- ==========================================================
+-- This file handles the visual display of levels and XP bars.
+-- It is anchored to the bottom-left corner of the screen.
+
+myprogress.player_huds = myprogress.player_huds or {}
+
+-- Formats numbers: 1200 -> 1.2k
+local function format_num(n)
+    if not n then return "0" end
+    if n >= 1000 then return (math.floor(n/100)/10 .. "k") end
+    return tostring(n)
+end
+
 function myprogress.update_hud(player)
     if not player then return end
     local name = player:get_player_name()
+    
+    -- Ensure player data is loaded
+    if not myprogress.players or not myprogress.players[name] then return end
     local stats = myprogress.players[name]
-    if not stats then return end
 
-    if myprogress.player_huds[name] then
-        for _, id in pairs(myprogress.player_huds[name]) do
-            player:hud_remove(id)
+    -- Initialize tracking for this player's HUD IDs
+    myprogress.player_huds[name] = myprogress.player_huds[name] or {}
+    local huds = myprogress.player_huds[name]
+
+    -- POSITIONING: Bottom Left
+    local ui_pos = {x = 0, y = 1}
+    local ui_align = {x = 1, y = -1} -- Grows right and up from the corner
+
+    -- Helper to update existing HUD or create new one
+    local function set_hud_element(id_key, text, color, offset_y)
+        if huds[id_key] then
+            player:hud_change(huds[id_key], "text", text)
+        else
+            huds[id_key] = player:hud_add({
+                hud_elem_type = "text",
+                position = ui_pos,
+                offset = {x = 20, y = offset_y},
+                text = text,
+                number = color,
+                alignment = ui_align,
+            })
         end
     end
-    myprogress.player_huds[name] = {}
 
-    local function format_num(n)
-        if not n then return "0" end
-        return n >= 1000 and (math.floor(n/100)/10 .. "k") or n
-    end
-
+    -- Calculate Overall Level
     local overall = (stats.mlevel or 0) + (stats.llevel or 0) + (stats.dlevel or 0) + 
                     (stats.flevel or 0) + (stats.blevel or 0) + (stats.clevel or 0)
     
-    table.insert(myprogress.player_huds[name], player:hud_add({
-        hud_elem_type = "text", position = {x=0, y=0}, offset = {x=20, y=20},
-        text = "YOU ARE LEVEL: " .. overall, number = 0x00FFFF, alignment = {x=1, y=1}
-    }))
+    -- 1. Main Header
+    local main_text = "YOUR MAIN LEVEL: " .. overall .. "   |   TOTAL XP: " .. stats.total_xp or 0
+    set_hud_element("main", main_text, 0x00FFFF, -20)
 
-    table.insert(myprogress.player_huds[name], player:hud_add({
-        hud_elem_type = "text", position = {x=0, y=1}, offset = {x=20, y=-240},
-        text = "TOTAL EXPERIENCE: " .. format_num(stats.total_xp or 0), number = 0xFFFF00, alignment = {x=1, y=0}
-    }))
-
+    -- 2. Skill Bars
     local skills = {
-        {k="mining",    l="MINING  ", c=0xffffff, o=0},
-        {k="lumbering", l="LUMBER  ", c=0x55ff55, o=20},
-        {k="digging",   l="DIGGING ", c=0xffd700, o=40},
-        {k="farming",   l="FARMING ", c=0x00ff00, o=60},
-        {k="building",  l="BUILDING", c=0xaaaaaa, o=80},
-        {k="combat",    l="COMBAT  ", c=0xff5555, o=100}
+        {k="mining",    l="Mining",  	c=0xffffff, o=-40},
+        {k="lumbering", l="Logging",  c=0x55ff55, o=-60},
+        {k="digging",   l="Digging", 	c=0xffd700, o=-80},
+        {k="farming",   l="Farming",    c=0x00ff00, o=-100},
+        {k="building",  l="Building",   c=0xaaaaaa, o=-120},
+        {k="combat",    l="Fighting",   c=0xff5555, o=-140}
     }
 
     for _, s in ipairs(skills) do
+        -- Map skill keys to level keys
         local l_key = "mlevel"
         if s.k == "lumbering" then l_key = "llevel"
         elseif s.k == "digging"   then l_key = "dlevel"
@@ -49,29 +75,31 @@ function myprogress.update_hud(player)
         local cur_xp = stats[s.k] or 0
         local cur_lvl = stats[l_key] or 0
         
-        local scale = myprogress.xp_scaling[s.k] or 50
+        -- Get scale from init.lua
+        local scale = (myprogress.xp_scaling and myprogress.xp_scaling[s.k]) or 100
         local goal = math.pow(cur_lvl + 1, 2) * scale
         
-        if myquests.settings.difficulty == "easy" then
+        -- Difficulty adjustment
+        if myquests.settings and myquests.settings.difficulty == "easy" then
             goal = math.ceil(goal * 0.5)
         end
         
+        -- Generate ASCII Progress Bar
         local bar = ""
-        local percent = (goal > 0) and (cur_xp / goal) or 0
+        local percent = math.min(cur_xp / math.max(goal, 1), 1)
         local portion = math.floor(percent * 10)
-        portion = math.min(math.max(portion, 0), 10)
-        
         for i=1,10 do bar = bar .. (i <= portion and "|" or ".") end
-
-        local display_text = s.l .. " Lv." .. cur_lvl .. " [" .. bar .. "] " .. format_num(cur_xp) .. "/" .. format_num(goal)
-
-        table.insert(myprogress.player_huds[name], player:hud_add({
-            hud_elem_type = "text", 
-            position = {x=0, y=1}, 
-            offset = {x=20, y=-210 + s.o},
-            text = display_text,
-            number = s.c, 
-            alignment = {x=1, y=0}
-        }))
+        
+        local display_text = string.format("%s Level %d [%s] %s/%s", s.l, cur_lvl, bar, format_num(cur_xp), format_num(goal))
+        set_hud_element(s.k, display_text, s.c, s.o)
     end
 end
+
+-- Force draw on join (with a delay to allow data to load)
+core.register_on_joinplayer(function(player)
+    core.after(2, function()
+        if player:is_player() then
+            myprogress.update_hud(player)
+        end
+    end)
+end)
