@@ -10,12 +10,12 @@ myprogress.player_huds = {}
 
 -- XP Scaling Configuration: determines how fast players level up
 myprogress.xp_scaling = {
-    mining    = 10,
-    lumbering = 8,
-    digging   = 10,
-    farming   = 5,
-    building  = 20,
-    combat    = 6
+    mining    = 100,
+    lumbering = 80,
+    digging   = 100,
+    farming   = 50,
+    building  = 200,
+    combat    = 60
 }
 
 -- Difficulty Settings
