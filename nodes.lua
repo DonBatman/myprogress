@@ -1,15 +1,5 @@
--- ==========================================================
--- NODE XP DEFINITIONS (nodes.lua)
--- ==========================================================
--- This file defines which nodes give XP and how much.
--- Supports: Default, Ethereal, MyOres, and MoreTrees.
-
--- XP values have been adjusted to 1 point per node harvest
--- to ensure 1 node = 1 point of progress.
-
 myprogress_nodes = {}
 
--- 1. Digging (Soil, Sand, Gravel, and Modded Soils)
 myprogress_nodes.digging = {
     ["default:dirt"] = 1,
     ["default:dirt_with_grass"] = 1,
@@ -20,7 +10,6 @@ myprogress_nodes.digging = {
     ["default:gravel"] = 1,
     ["default:clay"] = 1,
     ["default:silver_sand"] = 1,
-    -- Ethereal Soils
     ["ethereal:crystal_dirt"] = 1,
     ["ethereal:fiery_dirt"] = 1,
     ["ethereal:gray_dirt"] = 1,
@@ -29,7 +18,6 @@ myprogress_nodes.digging = {
     ["ethereal:jungle_dirt"] = 1,
 }
 
--- 2. Mining (Stone and Ores, including MyOres)
 myprogress_nodes.mining = {
     ["default:stone"] = 1,
     ["default:desert_stone"] = 1,
@@ -39,7 +27,6 @@ myprogress_nodes.mining = {
     ["default:stone_with_gold"] = 5,
     ["default:stone_with_mese"] = 8,
     ["default:stone_with_diamond"] = 15,
-    -- MyOres Support
     ["myores:tin_ore"] = 2,
     ["myores:silver_ore"] = 3,
     ["myores:platinum_ore"] = 6,
@@ -50,18 +37,15 @@ myprogress_nodes.mining = {
     ["myores:ruby_ore"] = 10,
     ["myores:sapphire_ore"] = 10,
     ["myores:emerald_ore"] = 10,
-    -- Ethereal Mining
     ["ethereal:crystal_ore"] = 8,
 }
 
--- 3. Lumbering (Trees from Default, MoreTrees, and Ethereal)
 myprogress_nodes.lumbering = {
     ["default:tree"] = 1,
     ["default:jungletree"] = 1,
     ["default:pine_tree"] = 1,
     ["default:acacia_tree"] = 1,
     ["default:aspen_tree"] = 1,
-    -- MoreTrees Support
     ["moretrees:apple_tree_trunk"] = 1,
     ["moretrees:birch_trunk"] = 1,
     ["moretrees:beech_trunk"] = 1,
@@ -74,7 +58,6 @@ myprogress_nodes.lumbering = {
     ["moretrees:sequoia_trunk"] = 1,
     ["moretrees:spruce_trunk"] = 1,
     ["moretrees:willow_trunk"] = 1,
-    -- Ethereal Trees
     ["ethereal:willow_trunk"] = 1,
     ["ethereal:redwood_trunk"] = 1,
     ["ethereal:frost_trunk"] = 1,
@@ -85,9 +68,7 @@ myprogress_nodes.lumbering = {
     ["ethereal:bamboo"] = 1,
 }
 
--- 4. Farming (Harvesting - Full Redo Restored)
 myprogress_nodes.farming = {
-    -- Default/Base Farming
     ["farming:wheat_8"] = 1,
     ["farming:cotton_8"] = 1,
     ["farming:corn_8"] = 1,
@@ -116,15 +97,11 @@ myprogress_nodes.farming = {
     ["farming:artichoke_5"] = 1,
     ["farming:parsley_3"] = 1,
     ["farming:spinach_4"] = 1,
-
-    -- Trees & Fruit
     ["default:apple"] = 1,
     ["default:papyrus"] = 1,
     ["default:cactus"] = 1,
     ["farming:cocoa_beans"] = 1,
     ["farming:pineapple_8"] = 1,
-
-    -- Ethereal Farming
     ["ethereal:strawberry_7"] = 1,
     ["ethereal:onion_5"] = 1,
     ["ethereal:banana"] = 1,
@@ -136,7 +113,6 @@ myprogress_nodes.farming = {
     ["ethereal:snow_onion"] = 1,
 }
 
--- 5. Special Machine Unlocks (Level 20 Rewards)
 myprogress_nodes.machines = {
     ["myprogress:master_smelter"]   = { skill = "mining",  level = 20 },
     ["myprogress:master_sawmill"]   = { skill = "lumbering", level = 20 },

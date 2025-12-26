@@ -1,7 +1,3 @@
--- ==========================================================
--- AWARDS, TROPHIES, AND MASTER MACHINES (awards.lua)
--- ==========================================================
-
 myquests.trophy_tiers = {
     {name = "bronze",  min = 5},
     {name = "silver",  min = 10},
@@ -10,7 +6,6 @@ myquests.trophy_tiers = {
     {name = "master",  min = 25}
 }
 
--- 1. Helper: Level to Tier Mapper
 function myquests.get_trophy_tier(level)
     if level >= 25 then return "master"
     elseif level >= 20 then return "diamond"
@@ -21,7 +16,6 @@ function myquests.get_trophy_tier(level)
     return nil
 end
 
--- 2. Trophy Registration (Nodes with Mesh)
 local awards = {"Miner", "Digger", "Logger", "Builder", "Farmer", "Combat"}
 local award_levels = {
     {"Bronze", "#cd7f32"},
@@ -55,8 +49,6 @@ for _, a in pairs(awards) do
     end
 end
 
--- 3. Master Machine Registrations (Level 20 Required)
-
 local function setup_inv(pos)
     local meta = core.get_meta(pos)
     local inv = meta:get_inventory()
@@ -64,7 +56,6 @@ local function setup_inv(pos)
     inv:set_size("dst", 2)
 end
 
--- Shared right-click logic for Master Machines
 local function machine_rightclick(pos, clicker, title, skill_key, req_lvl)
     local name = clicker:get_player_name()
     local stats = myprogress.players[name]
@@ -133,13 +124,11 @@ core.register_node("myprogress:master_sifter", {
     end,
 })
 
--- 4. Reward Granting Logic (With Duplicate Prevention)
 function myquests.give_milestone_rewards(player, skill, level, tier)
-    if not player then return end
+    if not player or not tier then return end
     local name = player:get_player_name()
     local pos = player:get_pos()
     
-    -- Safety check for quest data tables (FIX FOR NIL PLAYER TABLE)
     if not myquests.players then 
         myquests.players = {} 
     end
@@ -153,7 +142,6 @@ function myquests.give_milestone_rewards(player, skill, level, tier)
         q.given_awards = {} 
     end
 
-    -- Normalize Skill IDs for Item Names
     local skill_id = skill
     if skill == "digging" then skill_id = "digger"
     elseif skill == "lumbering" then skill_id = "logger"
@@ -163,7 +151,6 @@ function myquests.give_milestone_rewards(player, skill, level, tier)
     elseif skill == "combat" then skill_id = "combat"
     end
 
-    -- UNIQUE CHECK: Prevent getting 2 of the same trophy
     local award_key = skill_id .. "_" .. tier
     if q.given_awards[award_key] then
         return 
@@ -172,19 +159,16 @@ function myquests.give_milestone_rewards(player, skill, level, tier)
     local inv = player:get_inventory()
     local trophy = "myprogress:award_" .. skill_id .. "_" .. tier
 
-    -- Grant Trophy
     if inv:room_for_item("main", trophy) then
         inv:add_item("main", trophy)
         core.chat_send_player(name, core.colorize("#FFD700", "CONGRATULATIONS! You received the " .. tier:upper() .. " " .. skill:upper() .. " Trophy!"))
     else
-        -- If inventory is full, drop it on the ground
         core.add_item(pos, trophy)
         core.chat_send_player(name, core.colorize("#FFA500", "Inventory full! Your " .. tier:upper() .. " " .. skill:upper() .. " Trophy was dropped at your feet."))
     end
-    -- Mark as awarded regardless of how it was delivered
+    
     q.given_awards[award_key] = true
 
-    -- Grant Master Machine at Level 20
     if level == 20 then
         local machine = nil
         if skill == "mining" then machine = "myprogress:master_smelter"
@@ -203,7 +187,6 @@ function myquests.give_milestone_rewards(player, skill, level, tier)
         end
     end
     
-    -- Broadcast Milestone to Server
     core.chat_send_all(core.colorize("#ffd700", "[Milestone] " .. name .. " reached " .. skill:upper() .. " level " .. level .. "!"))
     core.sound_play("default_message", {to_player = name, gain = 1.0})
 end

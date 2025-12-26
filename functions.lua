@@ -1,8 +1,3 @@
--- ==========================================================
--- CORE LOGIC AND XP HANDLING (functions.lua)
--- ==========================================================
-
--- Master function to add XP and check for level ups
 function myprogress.add_xp(player, skill, amount)
     if not player or not player:is_player() then return end
     local name = player:get_player_name()
@@ -10,37 +5,33 @@ function myprogress.add_xp(player, skill, amount)
     
     if not stats then return end
 
-    -- Update Skill XP and Total XP
     stats[skill] = (stats[skill] or 0) + amount
     stats.total_xp = (stats.total_xp or 0) + amount
 
-    -- Map Skill to Level Key
     local l_map = {
         mining = "mlevel", lumbering = "llevel", digging = "dlevel",
         farming = "flevel", building = "blevel", combat = "clevel"
     }
     local l_key = l_map[skill] or "mlevel"
 
-    -- Level Calculation
     local cur_lvl = stats[l_key] or 0
-    local scale = myprogress.xp_scaling[skill] or 100
-    local goal = math.pow(cur_lvl + 1, 2) * scale
+    local scale = (myprogress.xp_scaling and myprogress.xp_scaling[skill]) or 100
     
-    if myquests.settings.difficulty == "easy" then
+    local next_level = cur_lvl + 1
+    local goal = math.pow(next_level, 2) * scale
+    
+    if myquests.settings and myquests.settings.difficulty == "easy" then
         goal = math.ceil(goal * 0.5)
     end
 
     if stats[skill] >= goal then
-        stats[l_key] = cur_lvl + 1
+        stats[l_key] = next_level
         
-        -- Announce Level Up
         core.chat_send_player(name, core.colorize("#00FF00", 
             "LEVEL UP! Your " .. skill:upper() .. " is now level " .. stats[l_key]))
         
-        -- Trigger visual effect
         myprogress.level_up_effect(player)
 
-        -- Check for Milestone Awards
         if myquests.get_trophy_tier then
             local tier = myquests.get_trophy_tier(stats[l_key])
             if tier then
@@ -49,13 +40,11 @@ function myprogress.add_xp(player, skill, amount)
         end
     end
 
-    -- Update HUD
     if myprogress.update_hud then
         myprogress.update_hud(player)
     end
 end
 
--- Visual effect for Level Up
 function myprogress.level_up_effect(player)
     if not player then return end
     local pos = player:get_pos()
@@ -78,14 +67,11 @@ function myprogress.level_up_effect(player)
     })
 end
 
--- Advanced multi-tab Formspec for /mystats
 function myprogress.show_stats_formspec(name, tab)
-    -- Safety check for global table
     if not myprogress.players then return end
     
     local p = myprogress.players[name]
     
-    -- Ensure quest player data exists
     if not myquests.players then myquests.players = {} end
     if not myquests.players[name] then
         myquests.players[name] = {awards = {}}
@@ -100,7 +86,6 @@ function myprogress.show_stats_formspec(name, tab)
         "tabheader[0,0;stats_tabs;Stats,Trophy Gallery;" .. (tab + 1) .. ";true;false]"
 
     if tab == 0 then
-        -- Tab 1: Detailed Skill Statistics
         formspec = formspec .. "label[3.8,0.5;== PLAYER STATISTICS ==]" ..
             "label[4.2,1;Total XP: " .. (p.total_xp or 0) .. "]"
         
@@ -137,7 +122,6 @@ function myprogress.show_stats_formspec(name, tab)
         end
         formspec = formspec .. "button_exit[4,9.5;2,0.5;close;Close]"
     else
-        -- Tab 2: Trophy Gallery
         formspec = formspec .. "label[3.8,0.5;== TROPHY GALLERY ==]"
         local trophies = {
             {id="miner",   key="mlevel",  n="Mining"},
@@ -189,7 +173,6 @@ function myprogress.show_stats_formspec(name, tab)
     core.show_formspec(name, "myprogress:stats", formspec)
 end
 
--- Listener for formspec field responses (tabs)
 core.register_on_player_receive_fields(function(player, formname, fields)
     if formname ~= "myprogress:stats" then return end
     if fields.stats_tabs then
@@ -200,7 +183,6 @@ core.register_on_player_receive_fields(function(player, formname, fields)
     end
 end)
 
--- 1. Digging, Mining, Lumbering, and Farming Listener
 core.register_on_dignode(function(pos, oldnode, digger)
     if not digger or not digger:is_player() then return end
     local node_name = oldnode.name
@@ -216,27 +198,22 @@ core.register_on_dignode(function(pos, oldnode, digger)
     end
 end)
 
--- 2. Building Listener (Placing nodes)
 core.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)
     if not placer or not placer:is_player() then return end
-    -- Most nodes give 1 XP for building
     myprogress.add_xp(placer, "building", 1)
 end)
 
--- 3. Combat Listener (Defeating Mobs/Players)
 core.register_on_punchplayer(function(player, hitter, time_from_last_punch, tool_capabilities, dir, damage)
     if hitter and hitter:is_player() and damage > 0 then
-        -- Give small XP for hitting
         myprogress.add_xp(hitter, "combat", 1)
     end
 end)
 
--- Catch player-on-player kills for Combat XP.
 core.register_on_dieplayer(function(player, reason)
     if reason.type == "punch" and reason.puncher then
         local killer = reason.puncher
         if killer:is_player() then
-            myprogress.add_xp(killer, "combat", 10) -- Bonus for a kill
+            myprogress.add_xp(killer, "combat", 10)
         end
     end
 end)

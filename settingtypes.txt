@@ -1,0 +1,17 @@
+[MyProgress Mod Settings]
+
+This defines how much XP is required to reach the next level. In "easy" mode, XP requirements are halved.
+
+myprogress_difficulty (Difficulty Level) enum normal easy,normal,hard
+
+[Progress HUD]
+
+These settings control the appearance of the on-screen display.
+
+The horizontal offset for the HUD from the bottom-left corner.
+
+myprogress_hud_offset_x (HUD X Offset) int 20 0 1000
+
+The vertical offset for the HUD from the bottom-left corner.
+
+myprogress_hud_offset_y (HUD Y Offset) int -20 -1000 0

@@ -1,14 +1,9 @@
--- ==========================================================
--- MAIN INITIALIZATION (init.lua)
--- ==========================================================
 myprogress = {}
 myquests = {}
 
--- Initialize global tables immediately to prevent nil indexing errors
 myprogress.players = {}
 myprogress.player_huds = {}
 
--- XP Scaling Configuration: determines how fast players level up
 myprogress.xp_scaling = {
     mining    = 100,
     lumbering = 80,
@@ -18,27 +13,20 @@ myprogress.xp_scaling = {
     combat    = 60
 }
 
--- Difficulty Settings
 myquests.settings = {
-    difficulty = "normal" 
+    difficulty = core.settings:get("myprogress_difficulty") or "normal" 
 }
 
--- Define paths for data persistence
 local path = core.get_modpath("myprogress")
 local world_path = core.get_worldpath()
 local save_file = world_path .. "/myprogress_data.json"
 
--- Load modules in specific order
 dofile(path .. "/nodes.lua")      
 dofile(path .. "/hud.lua")        
 dofile(path .. "/awards.lua")     
 dofile(path .. "/functions.lua")
-dofile(path .. "/chat_commands.lua") -- Load separate chat commands
-dofile(path .. "/leaderboard.lua")   -- Load separate leaderboard
-
--- ==========================================================
--- DATA PERSISTENCE (Save/Load)
--- ==========================================================
+dofile(path .. "/chat_commands.lua")
+dofile(path .. "/leaderboard.lua")
 
 function myprogress.save_data()
     local file = io.open(save_file, "w")
@@ -66,12 +54,7 @@ function myprogress.load_data()
     end
 end
 
--- Initial load on startup
 myprogress.load_data()
-
--- ==========================================================
--- PLAYER EVENTS
--- ==========================================================
 
 core.register_on_joinplayer(function(player)
     local name = player:get_player_name()
