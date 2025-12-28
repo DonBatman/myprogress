@@ -48,6 +48,7 @@ end
 function myprogress.level_up_effect(player)
     if not player then return end
     local pos = player:get_pos()
+    if not pos then return end
     pos.y = pos.y + 2
     
     core.add_particlespawner({
@@ -128,7 +129,7 @@ function myprogress.show_stats_formspec(name, tab)
             {id="digger",  key="dlevel",  n="Digging"},
             {id="logger",  key="llevel",  n="Lumbering"},
             {id="farmer",  key="flevel",  n="Farming"},
-            {id="builder", key="blevel",  n="Building"},
+            {id="builder", key="blevel",  n="Builder"},
             {id="combat",  key="clevel",  n="Slayer"}
         }
         local tiers = {
@@ -203,17 +204,47 @@ core.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, po
     myprogress.add_xp(placer, "building", 1)
 end)
 
-core.register_on_punchplayer(function(player, hitter, time_from_last_punch, tool_capabilities, dir, damage)
-    if hitter and hitter:is_player() and damage > 0 then
-        myprogress.add_xp(hitter, "combat", 1)
-    end
+local function combat_callback(hitter, victim)
+	if not hitter or not hitter:is_player() then return end
+	if not victim then return end
+	
+	if hitter == victim then return end
+
+	myprogress.add_xp(hitter, "combat", 1)
+	
+	core.after(0.2, function()
+		if victim and victim:get_hp() <= 0 then
+			myprogress.add_xp(hitter, "combat", 15)
+		end
+	end)
+end
+
+core.register_on_punchplayer(function(player, hitter, time, tool, dir, damage)
+	combat_callback(hitter, player)
 end)
 
-core.register_on_dieplayer(function(player, reason)
-    if reason.type == "punch" and reason.puncher then
-        local killer = reason.puncher
-        if killer:is_player() then
-            myprogress.add_xp(killer, "combat", 10)
-        end
-    end
+local original_on_punch = core.callback_origins and core.callback_origins.on_punch
+
+core.register_on_mods_loaded(function()
+	for name, proto in pairs(core.registered_entities) do
+		local old_punch = proto.on_punch
+		proto.on_punch = function(self, hitter, ...)
+			combat_callback(hitter, self.object)
+			if old_punch then
+				return old_punch(self, hitter, ...)
+			end
+		end
+	end
 end)
+
+if core.get_modpath("mobs") then
+	core.after(2, function()
+		if mobs and mobs.register_on_kill then
+			mobs.register_on_kill(function(hitter, victim)
+				if hitter and hitter:is_player() then
+					myprogress.add_xp(hitter, "combat", 15)
+				end
+			end)
+		end
+	end)
+end
