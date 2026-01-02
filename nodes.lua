@@ -1,10 +1,5 @@
--- ==========================================================
--- MYPROGRESS MOD - NODE XP DEFINITIONS (nodes.lua)
--- ==========================================================
-
 myprogress_nodes = {}
 
--- XP awarded for soft nodes (Shovels)
 myprogress_nodes.digging = {
     ["default:dirt"] = 1,
     ["default:dirt_with_grass"] = 1,
@@ -27,7 +22,6 @@ myprogress_nodes.digging = {
     ["myores:shale"] = 1,
 }
 
--- XP awarded for stone and ores (Pickaxes)
 myprogress_nodes.mining = {
     ["default:stone"] = 1,
     ["default:desert_stone"] = 1,
@@ -67,7 +61,6 @@ myprogress_nodes.mining = {
     ["ethereal:crystal_ore"] = 8,
 }
 
--- XP awarded for wood and trunks (Axes)
 myprogress_nodes.lumbering = {
     ["default:tree"] = 1,
     ["default:jungletree"] = 1,
@@ -96,7 +89,6 @@ myprogress_nodes.lumbering = {
     ["ethereal:bamboo"] = 1,
 }
 
--- XP awarded for harvested crops (Hoes/Hand)
 myprogress_nodes.farming = {
     ["farming:wheat_8"] = 1,
     ["farming:cotton_8"] = 1,
@@ -142,7 +134,6 @@ myprogress_nodes.farming = {
     ["ethereal:snow_onion"] = 1,
 }
 
--- Machine level requirements for Master-tier equipment
 myprogress_nodes.machines = {
     ["myprogress:master_smelter"]   = { skill = "mining",    level = 20 },
     ["myprogress:master_sawmill"]   = { skill = "lumbering", level = 20 },

@@ -1,8 +1,3 @@
--- ==========================================================
--- AWARDS, MACHINES & DATA PERSISTENCE (awards.lua)
--- ==========================================================
-
--- Initialize global table if not already done in main.lua
 myprogress = myprogress or {}
 myprogress.players = myprogress.players or {}
 myprogress.xp_scaling = {
@@ -14,7 +9,6 @@ myprogress.xp_scaling = {
     combat = 100
 }
 
--- Mapping helper: Maps the Skill ID used in code to the Level Key in player data
 local skill_map = {
     mining = "mlevel",
     lumbering = "llevel",
@@ -24,7 +18,6 @@ local skill_map = {
     combat = "clevel"
 }
 
--- Trophy Registration Logic
 local awards_categories = {"Miner", "Digger", "Logger", "Builder", "Farmer", "Combat"}
 local award_levels = {
     {"Bronze", "#cd7f32", 5},
@@ -58,14 +51,11 @@ for _, a in pairs(awards_categories) do
     end
 end
 
--- Award Definitions
 local awards_list = {
-    -- Functional Items
     {skill="mining", level=5, item="default:pick_steel", msg="Apprentice Miner: Steel Pickaxe Unlocked!"},
     {skill="mining", level=20, item="myprogress:master_smelter", msg="Master Miner: You can now place and use the Master Smelter!"},
 }
 
--- Automatically populate awards_list with Trophies based on the registration loops
 for _, category in pairs(awards_categories) do
     local skill_id = category == "Logger" and "lumbering" or string.lower(category)
     for _, level_data in ipairs(award_levels) do
@@ -80,7 +70,6 @@ for _, category in pairs(awards_categories) do
     end
 end
 
--- Function to check and give awards
 function myprogress.check_awards(player, skill, level)
     local name = player:get_player_name()
     local stats = myprogress.players[name]
@@ -92,7 +81,6 @@ function myprogress.check_awards(player, skill, level)
         if award.skill == skill and level >= award.level then
             local award_id = award.skill .. "_" .. award.level .. "_" .. award.item
             if not stats.awards[award_id] then
-                -- Give item
                 local inv = player:get_inventory()
                 local stack = ItemStack(award.item)
                 if inv:room_for_item("main", stack) then
@@ -101,10 +89,8 @@ function myprogress.check_awards(player, skill, level)
                     core.add_item(player:get_pos(), stack)
                 end
                 
-                -- Notify player
                 core.chat_send_player(name, core.colorize("#FFFF00", "[AWARD] " .. award.msg))
                 
-                -- Mark as claimed
                 stats.awards[award_id] = true
                 myprogress.save_data()
             end
@@ -112,7 +98,6 @@ function myprogress.check_awards(player, skill, level)
     end
 end
 
--- Force a re-check of all awards when a player joins
 core.register_on_joinplayer(function(player)
     local name = player:get_player_name()
     core.after(2, function()
@@ -128,7 +113,6 @@ core.register_on_joinplayer(function(player)
     end)
 end)
 
--- Data Loading Logic
 local function load_data()
     local filepath = core.get_worldpath() .. "/myprogress_data.json"
     local file = io.open(filepath, "r")
@@ -148,7 +132,6 @@ local function load_data()
     end
 end
 
--- Force Save Function
 function myprogress.save_data()
     local filepath = core.get_worldpath() .. "/myprogress_data.json"
     local file = io.open(filepath, "w")
@@ -159,7 +142,6 @@ function myprogress.save_data()
     end
 end
 
--- Improved Machine Right-Click
 local function machine_rightclick(pos, clicker, title, skill_id)
     local name = clicker:get_player_name()
     local stats = myprogress.players[name]
@@ -186,7 +168,6 @@ local function machine_rightclick(pos, clicker, title, skill_id)
     core.show_formspec(name, "myprogress:machine_" .. pos_str, fs)
 end
 
--- Master Smelter
 core.register_node("myprogress:master_smelter", {
     description = "Master Miner's Smelter (Level 20 Mining Required)",
     tiles = {"myprogress_miners_smelter.png"},
@@ -221,7 +202,6 @@ core.register_node("myprogress:master_smelter", {
     end,
 })
 
--- Emergency sync command
 core.register_chatcommand("sync_levels", {
     description = "Force syncs XP data to levels",
     privs = {interact = true},

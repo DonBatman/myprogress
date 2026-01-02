@@ -37,7 +37,6 @@ function myprogress.update_hud(player)
     local overall = (stats.mlevel or 0) + (stats.llevel or 0) + (stats.dlevel or 0) + 
                     (stats.flevel or 0) + (stats.blevel or 0) + (stats.clevel or 0)
     
-    -- Updated label to "YOUR MAIN LEVEL" with extra spacing
     local main_text = "YOUR MAIN LEVEL: " .. overall .. "    |    TOTAL XP: " .. (stats.total_xp or 0)
     set_hud_element("main", main_text, 0x00FFFF, -20)
 
@@ -64,7 +63,6 @@ function myprogress.update_hud(player)
         local scale = (myprogress.xp_scaling and myprogress.xp_scaling[s.k]) or 100
         local goal = math.pow(cur_lvl + 1, 2) * scale
         
-        -- Difficulty check (linked to myprogress_difficulty setting)
         if myquests.settings and myquests.settings.difficulty == "easy" then
             goal = math.ceil(goal * 0.5)
         end
@@ -74,7 +72,6 @@ function myprogress.update_hud(player)
         local portion = math.floor(percent * 10)
         for i=1,10 do bar = bar .. (i <= portion and "|" or ".") end
         
-        -- Updated display text formatting: "Skill Level X [|||.......] Cur/Goal"
         local display_text = string.format("%s Level %d [%s] %s/%s", s.l, cur_lvl, bar, format_num(cur_xp), format_num(goal))
         set_hud_element(s.k, display_text, s.c, s.o)
     end
