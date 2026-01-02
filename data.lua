@@ -1,6 +1,12 @@
+-- ==========================================================
+-- MYPROGRESS MOD - DATA PERSISTENCE (data.lua)
+-- ==========================================================
+
 local file_path = core.get_worldpath() .. "/myprogress_data.txt"
 
+-- Save all player statistics to the world folder
 function myprogress.save_data()
+    -- Safety check: don't save if the table is empty to prevent wiping existing data
     if not myprogress.players or next(myprogress.players) == nil then
         core.log("warning", "[MyProgress] table is empty, skipping save to prevent data loss!")
         return
@@ -10,11 +16,13 @@ function myprogress.save_data()
     if file then
         file:write(core.serialize(myprogress.players))
         file:close()
+        core.log("action", "[MyProgress] Player data saved to " .. file_path)
     else
         core.log("error", "[MyProgress] Failed to open data file for writing!")
     end
 end
 
+-- Load player statistics on server startup
 function myprogress.load_data()
     local file = io.open(file_path, "r")
     if file then

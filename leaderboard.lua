@@ -1,3 +1,7 @@
+-- ==========================================================
+-- LEADERBOARD SYSTEM (leaderboard.lua)
+-- ==========================================================
+
 function myprogress.get_leaderboard()
     local board = {}
 
@@ -12,6 +16,7 @@ function myprogress.get_leaderboard()
         end
     end
 
+    -- Sort by level descending
     table.sort(board, function(a, b)
         return a.level > b.level
     end)
@@ -31,11 +36,12 @@ core.register_chatcommand("top", {
         local msg = core.colorize("#00FFFF", "=== SERVER TOP PLAYERS ===\n")
         local player_rank = 0
         
+        -- Display the top 5
         for i = 1, math.min(5, #board) do
             local color = "#FFFFFF"
-            if i == 1 then color = "#FFD700"
-            elseif i == 2 then color = "#C0C0C0"
-            elseif i == 3 then color = "#CD7F32"
+            if i == 1 then color = "#FFD700"      -- Gold
+            elseif i == 2 then color = "#C0C0C0"  -- Silver
+            elseif i == 3 then color = "#CD7F32"  -- Bronze
             end
             
             msg = msg .. core.colorize(color, i .. ". " .. board[i].name .. " - Level " .. board[i].level) .. "\n"
@@ -43,6 +49,7 @@ core.register_chatcommand("top", {
             if board[i].name == name then player_rank = i end
         end
         
+        -- If the requesting player is not in the top 5, find their rank and show it
         if player_rank == 0 then
             for i, entry in ipairs(board) do
                 if entry.name == name then

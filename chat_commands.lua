@@ -1,3 +1,8 @@
+-- ==========================================================
+-- ADMIN AND PLAYER CHAT COMMANDS (chat_commands.lua)
+-- ==========================================================
+
+-- 1. Check detailed levels and XP
 core.register_chatcommand("level", {
     description = "Check your current levels and total XP",
     func = function(name)
@@ -20,6 +25,7 @@ core.register_chatcommand("level", {
     end,
 })
 
+-- 2. Brief stats overview
 core.register_chatcommand("mystats2", {
     description = "Show your current skill levels",
     func = function(name)
@@ -35,6 +41,7 @@ core.register_chatcommand("mystats2", {
     end,
 })
 
+-- 3. Open the Formspec Stats Menu
 core.register_chatcommand("mystats", {
     description = "Show your skill levels and XP progress in a menu.",
     func = function(name)
@@ -47,6 +54,7 @@ core.register_chatcommand("mystats", {
     end,
 })
 
+-- 4. Reset a player's progress (Admin only)
 core.register_chatcommand("resetstats", {
     params = "<playername>",
     description = "Reset a player's progress and quests",
@@ -64,11 +72,8 @@ core.register_chatcommand("resetstats", {
             
             if myquests.players then
                 myquests.players[param] = { 
-                    awards = { 
-                        miner=0, miner_level=0, digger=0, digger_level=0, 
-                        logger=0, logger_level=0, builder=0, builder_level=0, 
-                        farmer=0, farmer_level=0 
-                    } 
+                    awards = {},
+                    given_awards = {}
                 }
             end
             
@@ -84,6 +89,7 @@ core.register_chatcommand("resetstats", {
     end,
 })
 
+-- 5. Test Level-up Visuals
 core.register_chatcommand("testeffect", {
     description = "Trigger the level-up visual effect for yourself",
     func = function(name)
@@ -96,6 +102,7 @@ core.register_chatcommand("testeffect", {
     end,
 })
 
+-- 6. Set Skill Exactly (Admin only)
 core.register_chatcommand("setskill", {
     params = "<skill> <level.fraction>",
     description = "Set a skill level exactly (e.g. mining 4.9)",
