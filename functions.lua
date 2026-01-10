@@ -78,7 +78,7 @@ function myprogress.show_stats_formspec(name, tab)
 
     tab = tab or 0
     local formspec = "size[10,10.2]" ..
-        "background[0,0;10,10.2;gui_formbg.png;true]" ..
+        "background[0,0;10,10.2;myprogress_bg.png;true]" ..
         "tabheader[0,0;stats_tabs;Stats,Trophy Gallery;" .. (tab + 1) .. ";true;false]"
 
     if tab == 0 then
